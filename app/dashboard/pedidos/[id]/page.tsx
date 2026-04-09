@@ -43,7 +43,7 @@ export default function PedidoDetallePage() {
   );
 
   return (
-    <div className="p-6 mx-auto">
+    <div className="p-4 sm:p-6 mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/dashboard/pedidos" className="text-slate-400 hover:text-slate-600 transition">
           <i className="fa-solid fa-chevron-left text-sm" />
@@ -51,56 +51,56 @@ export default function PedidoDetallePage() {
         <div>
           <h1 className="text-xl font-semibold text-slate-800">{pedido.numero}</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            <i className="fa-solid fa-building mr-1" />
-            {pedido.proveedor} ·
-            <i className="fa-regular fa-calendar mx-1" />
-            {pedido.fecha}
+            <i className="fa-solid fa-building mr-1" />{pedido.proveedor} ·
+            <i className="fa-regular fa-calendar mx-1" />{pedido.fecha}
           </p>
         </div>
       </div>
 
       <div className="space-y-4">
+        {/* Tabla productos con scroll */}
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
+          <div className="px-4 sm:px-5 py-3 border-b border-slate-100 bg-slate-50">
             <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-              <i className="fa-solid fa-box text-blue-400" />
-              Productos
+              <i className="fa-solid fa-box text-blue-400" />Productos
             </h2>
           </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100">
-                <th className="text-left px-5 py-2 text-xs text-slate-400">Producto</th>
-                <th className="text-right px-5 py-2 text-xs text-slate-400">Cant.</th>
-                <th className="text-right px-5 py-2 text-xs text-slate-400">Precio</th>
-                <th className="text-right px-5 py-2 text-xs text-slate-400">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {pedido.productos.map((p) => (
-                <tr key={p.nombre}>
-                  <td className="px-5 py-3 text-slate-700">{p.nombre}</td>
-                  <td className="px-5 py-3 text-right text-slate-500">{p.cantidad}</td>
-                  <td className="px-5 py-3 text-right text-slate-500">S/ {p.precio.toFixed(2)}</td>
-                  <td className="px-5 py-3 text-right text-slate-700 font-medium">S/ {(p.cantidad * p.precio).toFixed(2)}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="text-left px-5 py-2 text-xs text-slate-400 whitespace-nowrap">Producto</th>
+                  <th className="text-right px-5 py-2 text-xs text-slate-400 whitespace-nowrap">Cant.</th>
+                  <th className="text-right px-5 py-2 text-xs text-slate-400 whitespace-nowrap">Precio</th>
+                  <th className="text-right px-5 py-2 text-xs text-slate-400 whitespace-nowrap">Subtotal</th>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="border-t border-slate-200 bg-slate-50">
-                <td colSpan={3} className="px-5 py-3 text-right text-sm text-slate-500">Total</td>
-                <td className="px-5 py-3 text-right text-base font-semibold text-slate-800">S/ {pedido.importe.toFixed(2)}</td>
-              </tr>
-            </tfoot>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {pedido.productos.map((p) => (
+                  <tr key={p.nombre}>
+                    <td className="px-5 py-3 text-slate-700 whitespace-nowrap">{p.nombre}</td>
+                    <td className="px-5 py-3 text-right text-slate-500 whitespace-nowrap">{p.cantidad}</td>
+                    <td className="px-5 py-3 text-right text-slate-500 whitespace-nowrap">S/ {p.precio.toFixed(2)}</td>
+                    <td className="px-5 py-3 text-right text-slate-700 font-medium whitespace-nowrap">S/ {(p.cantidad * p.precio).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-slate-200 bg-slate-50">
+                  <td colSpan={3} className="px-5 py-3 text-right text-sm text-slate-500 whitespace-nowrap">Total</td>
+                  <td className="px-5 py-3 text-right text-base font-semibold text-slate-800 whitespace-nowrap">S/ {pedido.importe.toFixed(2)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
+        {/* Actualización */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <i className="fa-solid fa-pen-to-square text-blue-400" />
-            Actualización del pedido
+            <i className="fa-solid fa-pen-to-square text-blue-400" />Actualización del pedido
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { label: "Estado", el: <select value={estado} onChange={(e) => setEstado(e.target.value)} className={inputCls}><option value="">Seleccionar</option><option>Aceptado</option><option>Rechazado</option><option>Agotado</option></select> },
               { label: "Tipo de entrega", el: <select value={tipoEntrega} onChange={(e) => setTipoEntrega(e.target.value)} className={inputCls}><option value="">Seleccionar</option><option>Completa</option><option>Incompleta</option><option>No entregó</option></select> },
@@ -118,10 +118,10 @@ export default function PedidoDetallePage() {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
+        {/* Calificación */}
+        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
-            <i className="fa-solid fa-star text-blue-400" />
-            Calificación del proveedor
+            <i className="fa-solid fa-star text-blue-400" />Calificación del proveedor
           </h2>
           <div className="divide-y divide-slate-100">
             <StarRow label="Calidad" value={calidad} setValue={setCalidad} />
@@ -133,15 +133,9 @@ export default function PedidoDetallePage() {
         </div>
 
         <div className="flex justify-end pt-2">
-          <button
-            onClick={handleSave}
-            className={`text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2 ${saved ? "bg-emerald-600" : "bg-blue-700 hover:bg-blue-600"}`}
-          >
-            {saved ? (
-              <><i className="fa-solid fa-circle-check" /> Guardado</>
-            ) : (
-              <><i className="fa-solid fa-floppy-disk" /> Guardar cambios</>
-            )}
+          <button onClick={handleSave}
+            className={`text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2 ${saved ? "bg-emerald-600" : "bg-blue-700 hover:bg-blue-600"}`}>
+            {saved ? <><i className="fa-solid fa-circle-check" /> Guardado</> : <><i className="fa-solid fa-floppy-disk" /> Guardar cambios</>}
           </button>
         </div>
       </div>

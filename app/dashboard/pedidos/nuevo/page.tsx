@@ -23,7 +23,7 @@ export default function NuevoPedidoPage() {
   };
 
   return (
-    <div className="p-6 mx-auto">
+    <div className="p-4 sm:p-6 mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/dashboard/pedidos" className="text-slate-400 hover:text-slate-600 transition">
           <i className="fa-solid fa-chevron-left text-sm" />
@@ -35,12 +35,11 @@ export default function NuevoPedidoPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <i className="fa-solid fa-clipboard-list text-blue-400" />
-            Información del pedido
+            <i className="fa-solid fa-clipboard-list text-blue-400" />Información del pedido
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">Nro. de pedido <span className="text-red-500">*</span></label>
               <input type="text" placeholder="PED-0004" className={inputCls} />
@@ -65,19 +64,18 @@ export default function NuevoPedidoPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-              <i className="fa-solid fa-box text-blue-400" />
-              Productos
+              <i className="fa-solid fa-box text-blue-400" />Productos
             </h2>
             <button type="button" onClick={addProducto} className="text-xs text-blue-600 hover:text-blue-800 font-medium transition cursor-pointer flex items-center gap-1">
-              <i className="fa-solid fa-plus" />
-              Agregar producto
+              <i className="fa-solid fa-plus" />Agregar
             </button>
           </div>
           <div className="space-y-3">
-            <div className="grid grid-cols-12 gap-2 px-1">
+            {/* Cabecera — oculta en móvil muy pequeño */}
+            <div className="hidden sm:grid grid-cols-12 gap-2 px-1">
               <span className="col-span-5 text-xs text-slate-400">Producto</span>
               <span className="col-span-3 text-xs text-slate-400">Cantidad</span>
               <span className="col-span-3 text-xs text-slate-400">Precio unit.</span>
@@ -85,10 +83,13 @@ export default function NuevoPedidoPage() {
             </div>
             {productos.map((p) => (
               <div key={p.id} className="grid grid-cols-12 gap-2 items-center">
-                <input className={`col-span-5 ${inputCls}`} placeholder="Nombre del producto" value={p.nombre} onChange={(e) => updateProducto(p.id, "nombre", e.target.value)} />
-                <input type="number" min={1} className={`col-span-3 ${inputCls}`} value={p.cantidad} onChange={(e) => updateProducto(p.id, "cantidad", Number(e.target.value))} />
-                <input type="number" min={0} step={0.01} className={`col-span-3 ${inputCls}`} value={p.precio} onChange={(e) => updateProducto(p.id, "precio", Number(e.target.value))} />
-                <button type="button" onClick={() => removeProducto(p.id)} className="col-span-1 text-slate-300 hover:text-red-500 transition cursor-pointer flex justify-center">
+                <input className={`col-span-11 sm:col-span-5 ${inputCls}`} placeholder="Producto" value={p.nombre} onChange={(e) => updateProducto(p.id, "nombre", e.target.value)} />
+                <button type="button" onClick={() => removeProducto(p.id)} className="col-span-1 sm:hidden text-slate-300 hover:text-red-500 transition cursor-pointer flex justify-center">
+                  <i className="fa-solid fa-xmark" />
+                </button>
+                <input type="number" min={1} className={`col-span-5 sm:col-span-3 ${inputCls}`} placeholder="Cant." value={p.cantidad} onChange={(e) => updateProducto(p.id, "cantidad", Number(e.target.value))} />
+                <input type="number" min={0} step={0.01} className={`col-span-6 sm:col-span-3 ${inputCls}`} placeholder="Precio" value={p.precio} onChange={(e) => updateProducto(p.id, "precio", Number(e.target.value))} />
+                <button type="button" onClick={() => removeProducto(p.id)} className="hidden sm:flex col-span-1 text-slate-300 hover:text-red-500 transition cursor-pointer justify-center">
                   <i className="fa-solid fa-xmark" />
                 </button>
               </div>
@@ -104,11 +105,7 @@ export default function NuevoPedidoPage() {
         <div className="flex items-center justify-end gap-3 pt-2">
           <Link href="/dashboard/pedidos" className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition">Cancelar</Link>
           <button type="submit" disabled={loading} className="bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
-            {loading ? (
-              <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</>
-            ) : (
-              <><i className="fa-solid fa-floppy-disk" /> Guardar pedido</>
-            )}
+            {loading ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</> : <><i className="fa-solid fa-floppy-disk" /> Guardar pedido</>}
           </button>
         </div>
       </form>

@@ -12,19 +12,16 @@ export default function LoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      router.push("/dashboard/proveedores");
-    }, 800);
+    setTimeout(() => { router.push("/dashboard/proveedores"); }, 800);
   };
 
   return (
-    <div className="min-h-screen bg-white flex">
-      {/* Panel izquierdo decorativo */}
+    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
+      {/* Panel izquierdo decorativo — oculto en móvil */}
       <div className="hidden lg:flex lg:w-1/2 bg-blue-700 flex-col items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute top-[-80px] left-[-80px] w-72 h-72 rounded-full bg-blue-600 opacity-50" />
         <div className="absolute bottom-[-60px] right-[-60px] w-56 h-56 rounded-full bg-blue-800 opacity-60" />
         <div className="absolute top-1/2 right-[-40px] w-32 h-32 rounded-full bg-red-500 opacity-30" />
-
         <div className="relative z-10 text-center">
           <div className="mb-6 flex justify-center">
             <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
@@ -49,12 +46,14 @@ export default function LoginPage() {
       </div>
 
       {/* Panel derecho - formulario */}
-      <div className="flex-1 flex items-center justify-center px-6">
+      <div className="flex-1 flex items-center justify-center px-6 py-10">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden flex justify-center mb-8">
-            <div className="w-14 h-14 bg-blue-700 rounded-xl flex items-center justify-center overflow-hidden">
-              <Image src="/logo-sistema.jpeg" alt="Logo" width={56} height={56} className="object-cover" />
+          {/* Logo visible solo en móvil */}
+          <div className="lg:hidden flex flex-col items-center mb-8 gap-3">
+            <div className="w-16 h-16 bg-blue-700 rounded-2xl flex items-center justify-center overflow-hidden">
+              <Image src="/logo-sistema.jpeg" alt="Logo" width={64} height={64} className="object-cover" />
             </div>
+            <span className="text-base font-semibold text-slate-700">Directorio de Proveedores</span>
           </div>
 
           <div className="mb-8">
@@ -64,52 +63,35 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wider">
-                Correo electrónico
-              </label>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wider">Correo electrónico</label>
               <div className="relative">
                 <i className="fa-regular fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="usuario@empresa.com"
-                  required
+                  type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                  placeholder="usuario@empresa.com" required
                   className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wider">
-                Contraseña
-              </label>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wider">Contraseña</label>
               <div className="relative">
                 <i className="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
                 <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
+                  type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••" required
                   className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                 />
               </div>
             </div>
             <button
-              type="submit"
-              disabled={loading}
+              type="submit" disabled={loading}
               className="w-full bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white font-medium text-sm py-2.5 rounded-lg transition-all duration-150 mt-2 cursor-pointer flex items-center justify-center gap-2"
             >
               {loading ? (
-                <>
-                  <i className="fa-solid fa-spinner fa-spin" />
-                  Ingresando...
-                </>
+                <><i className="fa-solid fa-spinner fa-spin" />Ingresando...</>
               ) : (
-                <>
-                  <i className="fa-solid fa-right-to-bracket" />
-                  Ingresar
-                </>
+                <><i className="fa-solid fa-right-to-bracket" />Ingresar</>
               )}
             </button>
           </form>

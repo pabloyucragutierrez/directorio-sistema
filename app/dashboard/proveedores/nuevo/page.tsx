@@ -3,18 +3,78 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+const PAISES_CIUDADES: Record<string, string[]> = {
+  Perú: ["Lima", "Arequipa", "Trujillo", "Chiclayo", "Cusco", "Piura", "Iquitos", "Huancayo", "Tacna", "Puno"],
+  Colombia: ["Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena", "Cúcuta", "Bucaramanga", "Pereira", "Manizales"],
+  Chile: ["Santiago", "Valparaíso", "Concepción", "Antofagasta", "Temuco", "Rancagua", "Talca", "Iquique", "Arica"],
+  Argentina: ["Buenos Aires", "Córdoba", "Rosario", "Mendoza", "La Plata", "Tucumán", "Mar del Plata", "Salta", "Santa Fe"],
+  Bolivia: ["La Paz", "Santa Cruz de la Sierra", "Cochabamba", "Oruro", "Potosí", "Sucre", "Tarija", "Trinidad"],
+  Brasil: ["São Paulo", "Río de Janeiro", "Brasília", "Salvador", "Fortaleza", "Belo Horizonte", "Manaus", "Curitiba"],
+  Ecuador: ["Quito", "Guayaquil", "Cuenca", "Machala", "Durán", "Manta", "Portoviejo", "Loja", "Ambato"],
+  Paraguay: ["Asunción", "Ciudad del Este", "San Lorenzo", "Luque", "Capiatá", "Lambaré", "Fernando de la Mora"],
+  Uruguay: ["Montevideo", "Salto", "Paysandú", "Las Piedras", "Rivera", "Maldonado", "Tacuarembó"],
+  Venezuela: ["Caracas", "Maracaibo", "Valencia", "Barquisimeto", "Maracay", "Ciudad Guayana", "Maturín"],
+  Guyana: ["Georgetown", "Linden", "New Amsterdam", "Anna Regina"],
+  Surinam: ["Paramaribo", "Lelydorp", "Nieuw Nickerie", "Moengo"],
+  "Guyana Francesa": ["Cayena", "Saint-Laurent-du-Maroni", "Kourou"],
+  Guatemala: ["Ciudad de Guatemala", "Mixco", "Villa Nueva", "Quetzaltenango", "Huehuetenango", "Escuintla"],
+  Honduras: ["Tegucigalpa", "San Pedro Sula", "Choloma", "La Ceiba", "El Progreso", "Choluteca"],
+  "El Salvador": ["San Salvador", "Santa Ana", "San Miguel", "Mejicanos", "Soyapango", "Apopa"],
+  Nicaragua: ["Managua", "León", "Masaya", "Matagalpa", "Chinandega", "Granada"],
+  "Costa Rica": ["San José", "Alajuela", "Cartago", "Heredia", "Liberia", "Pérez Zeledón"],
+  Panamá: ["Ciudad de Panamá", "San Miguelito", "Tocumen", "La Chorrera", "Colón", "David"],
+  Belice: ["Belmopán", "Ciudad de Belice", "San Ignacio", "Orange Walk", "Dangriga"],
+  México: ["Ciudad de México", "Guadalajara", "Monterrey", "Cancún", "Puebla", "Tijuana", "León", "Mérida"],
+};
+const PAISES = Object.keys(PAISES_CIUDADES).sort();
+
+const RUBROS: Record<string, string[]> = {
+  "Agropecuario": ["Semillas y fertilizantes", "Maquinaria agrícola", "Ganadería", "Acuicultura", "Productos veterinarios"],
+  "Alimentos y Bebidas": ["Abarrotes", "Bebidas alcohólicas", "Bebidas no alcohólicas", "Panadería y repostería", "Lácteos", "Carnes y embutidos", "Frutas y verduras", "Snacks y confitería"],
+  "Automotriz": ["Vehículos", "Repuestos y accesorios", "Lubricantes", "Llantas", "Equipos de taller"],
+  "Construcción": ["Materiales de construcción", "Acabados y pisos", "Sanitarios y griferías", "Pinturas y adhesivos", "Herramientas", "Electricidad e iluminación"],
+  "Educación": ["Libros y útiles", "Mobiliario escolar", "Plataformas educativas", "Uniformes", "Equipos de laboratorio"],
+  "Hogar y Decoración": ["Muebles", "Electrodomésticos", "Iluminación decorativa", "Textiles para el hogar", "Artículos de cocina"],
+  "Logística y Transporte": ["Carga terrestre", "Carga aérea", "Carga marítima", "Almacenaje", "Courier y mensajería"],
+  "Salud y Farmacia": ["Medicamentos", "Dispositivos médicos", "Productos de higiene", "Suplementos nutricionales", "Equipos hospitalarios"],
+  "Servicios Profesionales": ["Consultoría", "Legal y notarial", "Contabilidad y finanzas", "Marketing y publicidad", "Diseño y creatividad"],
+  "Tecnología": ["Hardware", "Software", "Electrónica de consumo", "Telecomunicaciones", "Cómputo y accesorios", "Seguridad electrónica"],
+  "Textil y Confección": ["Ropa casual", "Ropa deportiva", "Ropa interior", "Calzado", "Accesorios de moda", "Telas e insumos"],
+  "Otro": ["Otro"],
+};
+const RUBROS_LIST = Object.keys(RUBROS);
+
+const FORMAS_PAGO = [
+  { value: "", label: "Seleccionar" },
+  { value: "yape", label: "Yape" },
+  { value: "plin", label: "Plin" },
+  { value: "transferencia", label: "Transferencia bancaria" },
+  { value: "deposito", label: "Depósito bancario" },
+  { value: "efectivo", label: "Efectivo" },
+  { value: "cheque", label: "Cheque" },
+  { value: "tarjeta_credito", label: "Tarjeta de crédito" },
+  { value: "tarjeta_debito", label: "Tarjeta de débito" },
+  { value: "visa", label: "Visa / Mastercard" },
+  { value: "paypal", label: "PayPal" },
+];
+
 export default function NuevoProveedorPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [pais, setPais] = useState("");
+  const [ciudad, setCiudad] = useState("");
+  const [rubro, setRubro] = useState("");
+  const [subrubro, setSubrubro] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => router.push("/dashboard/proveedores"), 800);
-  };
+  const ciudades = pais ? (PAISES_CIUDADES[pais] ?? []) : [];
+  const subrubros = rubro ? (RUBROS[rubro] ?? []) : [];
+
+  const handlePaisChange = (e: React.ChangeEvent<HTMLSelectElement>) => { setPais(e.target.value); setCiudad(""); };
+  const handleRubroChange = (e: React.ChangeEvent<HTMLSelectElement>) => { setRubro(e.target.value); setSubrubro(""); };
+  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); setLoading(true); setTimeout(() => router.push("/dashboard/proveedores"), 800); };
 
   return (
-    <div className="p-6 mx-auto">
+    <div className="p-4 sm:p-6 mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <Link href="/dashboard/proveedores" className="text-slate-400 hover:text-slate-600 transition">
           <i className="fa-solid fa-chevron-left text-sm" />
@@ -27,46 +87,67 @@ export default function NuevoProveedorPage() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <Section title="Datos generales" icon="fa-solid fa-building">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Razón social" required><input type="text" placeholder="Empresa S.A." className={inputCls} /></Field>
-            <Field label="País" required><input type="text" placeholder="Perú" className={inputCls} /></Field>
-            <Field label="Ciudad" required><input type="text" placeholder="Lima" className={inputCls} /></Field>
+            <Field label="País" required>
+              <select value={pais} onChange={handlePaisChange} className={inputCls}>
+                <option value="">Seleccionar país</option>
+                {PAISES.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </Field>
+            <Field label="Ciudad" required>
+              <select value={ciudad} onChange={(e) => setCiudad(e.target.value)} disabled={!pais} className={inputCls}>
+                <option value="">{pais ? "Seleccionar ciudad" : "Primero selecciona un país"}</option>
+                {ciudades.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </Field>
             <Field label="Dirección"><input type="text" placeholder="Av. Principal 123" className={inputCls} /></Field>
             <Field label="Distrito / Zona / Barrio"><input type="text" placeholder="Miraflores" className={inputCls} /></Field>
             <Field label="Código postal"><input type="text" placeholder="15074" className={inputCls} /></Field>
-            <Field label="Referencia" className="col-span-2"><input type="text" placeholder="Cerca al parque..." className={inputCls} /></Field>
-            <Field label="Entrega">
-              <select className={inputCls}>
-                <option value="">Seleccionar</option>
-                <option value="si">Sí</option>
-                <option value="no">No</option>
+            <Field label="Referencia" className="sm:col-span-2"><input type="text" placeholder="Cerca al parque..." className={inputCls} /></Field>
+            <Field label="Rubro" required>
+              <select value={rubro} onChange={handleRubroChange} className={inputCls}>
+                <option value="">Seleccionar rubro</option>
+                {RUBROS_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
+            </Field>
+            <Field label="Subrubro">
+              <select value={subrubro} onChange={(e) => setSubrubro(e.target.value)} disabled={!rubro} className={inputCls}>
+                <option value="">{rubro ? "Seleccionar subrubro" : "Primero selecciona un rubro"}</option>
+                {subrubros.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </Field>
+            <Field label="Entrega">
+              <select className={inputCls}><option value="">Seleccionar</option><option value="si">Sí</option><option value="no">No</option></select>
             </Field>
             <Field label="Email" required><input type="email" placeholder="contacto@empresa.com" className={inputCls} /></Field>
           </div>
         </Section>
 
         <Section title="Datos fiscales" icon="fa-solid fa-file-invoice">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="RUC / NIT / RUT" required><input type="text" placeholder="20512345678" className={inputCls} /></Field>
             <Field label="Licencia Nro."><input type="text" placeholder="LIC-000123" className={inputCls} /></Field>
             <Field label="Copia RUC / NIT / RUT"><input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} /></Field>
-            <Field label="Forma de pago"><input type="text" placeholder="Transferencia, efectivo..." className={inputCls} /></Field>
-            <Field label="Datos para pago" className="col-span-2">
-              <textarea rows={2} placeholder="Banco, cuenta, CCI..." className={`${inputCls} resize-none`} />
+            <Field label="Copia Licencia"><input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} /></Field>
+            <Field label="Forma de pago">
+              <select className={inputCls}>{FORMAS_PAGO.map((fp) => <option key={fp.value} value={fp.value}>{fp.label}</option>)}</select>
+            </Field>
+            <Field label="Datos para pago" className="sm:col-span-2">
+              <textarea rows={2} placeholder="Banco, cuenta, CCI, número Yape..." className={`${inputCls} resize-none`} />
             </Field>
           </div>
         </Section>
 
         <Section title="Contacto" icon="fa-solid fa-phone">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Teléfono"><input type="tel" placeholder="+51 1 234 5678" className={inputCls} /></Field>
             <Field label="WhatsApp"><input type="tel" placeholder="+51 987 654 321" className={inputCls} /></Field>
           </div>
         </Section>
 
         <Section title="Representante legal" icon="fa-solid fa-user-tie">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Nombre completo" required><input type="text" placeholder="Juan Pérez" className={inputCls} /></Field>
             <Field label="DNI / CI / ID" required><input type="text" placeholder="12345678" className={inputCls} /></Field>
             <Field label="Teléfono"><input type="tel" placeholder="+51 987 000 000" className={inputCls} /></Field>
@@ -75,19 +156,9 @@ export default function NuevoProveedorPage() {
         </Section>
 
         <div className="flex items-center justify-end gap-3 pt-2">
-          <Link href="/dashboard/proveedores" className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition">
-            Cancelar
-          </Link>
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2"
-          >
-            {loading ? (
-              <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</>
-            ) : (
-              <><i className="fa-solid fa-floppy-disk" /> Guardar proveedor</>
-            )}
+          <Link href="/dashboard/proveedores" className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition">Cancelar</Link>
+          <button type="submit" disabled={loading} className="bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+            {loading ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</> : <><i className="fa-solid fa-floppy-disk" /> Guardar proveedor</>}
           </button>
         </div>
       </form>
@@ -100,10 +171,9 @@ const fileCls = "w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2 
 
 function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-5">
+    <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
       <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-        <i className={`${icon} text-blue-400`} />
-        {title}
+        <i className={`${icon} text-blue-400`} />{title}
       </h2>
       {children}
     </div>
