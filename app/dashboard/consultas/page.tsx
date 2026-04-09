@@ -25,9 +25,7 @@ export default function ConsultasPage() {
 
       <div className="flex items-center gap-3 mb-4">
         <div className="relative w-72">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+          <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -52,16 +50,23 @@ export default function ConsultasPage() {
             {filtered.map((d) => (
               <tr key={d.proveedor} className="hover:bg-blue-50/50 transition">
                 <td className="px-4 py-3.5 font-medium text-slate-800">{d.proveedor}</td>
-                <td className="px-4 py-3.5 text-slate-500">{d.pais}</td>
-                <td className="px-4 py-3.5 text-slate-500">{d.pedidos}</td>
+                <td className="px-4 py-3.5 text-slate-500">
+                  <i className="fa-solid fa-location-dot mr-1.5 text-slate-300" />
+                  {d.pais}
+                </td>
+                <td className="px-4 py-3.5 text-slate-500">
+                  <i className="fa-solid fa-clipboard-list mr-1.5 text-slate-300" />
+                  {d.pedidos}
+                </td>
                 <td className="px-4 py-3.5">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-amber-400">★</span>
+                    <i className="fa-solid fa-star text-amber-400 text-xs" />
                     <span className="text-slate-700 text-sm">{d.calificacion.toFixed(1)}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3.5">
-                  <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${d.activo ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium ${d.activo ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                    <i className={`fa-solid fa-circle text-[6px] ${d.activo ? "text-emerald-500" : "text-slate-400"}`} />
                     {d.activo ? "Activo" : "Inactivo"}
                   </span>
                 </td>
