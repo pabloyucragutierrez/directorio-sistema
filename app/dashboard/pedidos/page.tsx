@@ -30,7 +30,7 @@ export default function PedidosPage() {
   );
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-full mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold text-slate-800">Pedidos</h1>

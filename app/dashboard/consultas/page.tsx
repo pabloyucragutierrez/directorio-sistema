@@ -17,7 +17,7 @@ export default function ConsultasPage() {
   );
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-full mx-auto">
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-slate-800">Consultas</h1>
         <p className="text-sm text-slate-500 mt-0.5">Busca y consulta proveedores y pedidos</p>

@@ -22,7 +22,7 @@ export default function ReportesPage() {
   const inputCls = "bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition";
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-full mx-auto">
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-slate-800">Reportes</h1>
         <p className="text-sm text-slate-500 mt-0.5">Resumen de actividad del directorio</p>
