@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 interface Producto {
   id: number;
   nombre: string;
+  descripcion?: string;
   precio: number;
   fotoUrl?: string;
 }
@@ -50,7 +51,6 @@ function calcCalificacionPromedio(pedidos?: Proveedor['pedidos']) {
   return Math.round((suma / conCal.length) * 10) / 10;
 }
 
-// ─── Modal Producto ────────────────────────────────────────────────────────────
 function ProductoModal({
   proveedorId,
   editando,
@@ -63,14 +63,15 @@ function ProductoModal({
   onSaved: () => void;
 }) {
   const [nombre, setNombre] = useState(editando?.nombre ?? "");
+  const [descripcion, setDescripcion] = useState(editando?.descripcion ?? "");
   const [precio, setPrecio] = useState(editando?.precio?.toString() ?? "");
   const [foto, setFoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(editando?.fotoUrl ?? null);
+  const [isDragging, setIsDragging] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const handleFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
+  const handleFoto = (file: File | null) => {
     setFoto(file);
     if (file) {
       const reader = new FileReader();
@@ -86,6 +87,7 @@ function ProductoModal({
     try {
       const fd = new FormData();
       fd.append("nombre", nombre);
+      fd.append("descripcion", descripcion);
       fd.append("precio", precio);
       if (foto) fd.append("foto", foto);
       if (editando) {
@@ -100,6 +102,8 @@ function ProductoModal({
       setSaving(false);
     }
   };
+
+  const inputId = "foto-producto-modal";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -126,18 +130,47 @@ function ProductoModal({
               placeholder="Nombre del producto" className={inputCls} />
           </div>
           <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Descripción</label>
+            <textarea
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              placeholder="Descripción del producto..."
+              rows={2}
+              className={`${inputCls} resize-none`}
+            />
+          </div>
+          <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Precio <span className="text-red-500">*</span></label>
             <input type="number" min={0} step={0.01} value={precio} onChange={(e) => setPrecio(e.target.value)}
               placeholder="0.00" className={inputCls} />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Foto</label>
-            <input type="file" accept=".jpg,.jpeg,.png,.webp"
-              className="w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 file:text-xs hover:file:bg-blue-100 transition cursor-pointer"
-              onChange={handleFoto} />
-            {preview && (
-              <img src={preview} alt="preview" className="mt-2 h-20 w-20 rounded-lg border border-slate-200 object-cover" />
-            )}
+            <label
+              htmlFor={inputId}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFoto(e.dataTransfer.files?.[0] ?? null); }}
+              className={`relative flex flex-col items-center justify-center w-full h-32 rounded-xl border-2 border-dashed cursor-pointer transition overflow-hidden
+                ${isDragging ? "border-blue-400 bg-blue-50" : preview ? "border-slate-200" : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/40"}`}
+            >
+              {preview ? (
+                <>
+                  <img src={preview} alt="preview" className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition">
+                    <i className="fa-solid fa-arrow-up-from-bracket text-white text-xl mb-1" />
+                    <span className="text-white text-xs font-medium">Cambiar imagen</span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <i className="fa-solid fa-cloud-arrow-up text-slate-300 text-2xl" />
+                  <span className="text-xs text-slate-400">Arrastra o haz clic para subir</span>
+                </div>
+              )}
+            </label>
+            <input id={inputId} type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden"
+              onChange={(e) => handleFoto(e.target.files?.[0] ?? null)} />
           </div>
         </div>
 
@@ -155,7 +188,6 @@ function ProductoModal({
   );
 }
 
-// ─── Pestaña Productos ─────────────────────────────────────────────────────────
 function ProductosTab({ proveedorId }: { proveedorId: number }) {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -221,20 +253,25 @@ function ProductosTab({ proveedorId }: { proveedorId: number }) {
                   <i className="fa-solid fa-image text-2xl text-slate-300" />
                 </div>
               )}
-              <div className="p-3 flex items-center justify-between gap-2 flex-1">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">{p.nombre}</p>
-                  <p className="text-sm text-blue-700 font-semibold mt-0.5">S/ {Number(p.precio).toFixed(2)}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button onClick={() => openEditar(p)}
-                    className="text-slate-400 hover:text-blue-600 transition cursor-pointer">
-                    <i className="fa-solid fa-pen-to-square text-sm" />
-                  </button>
-                  <button onClick={() => handleDelete(p.id)} disabled={deletingId === p.id}
-                    className="text-slate-400 hover:text-red-500 transition cursor-pointer disabled:opacity-40">
-                    <i className="fa-solid fa-trash text-sm" />
-                  </button>
+              <div className="p-3 flex flex-col gap-1 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-slate-800 truncate">{p.nombre}</p>
+                    {p.descripcion && (
+                      <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{p.descripcion}</p>
+                    )}
+                    <p className="text-sm text-blue-700 font-semibold mt-1">S/ {Number(p.precio).toFixed(2)}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
+                    <button onClick={() => openEditar(p)}
+                      className="text-slate-400 hover:text-blue-600 transition cursor-pointer">
+                      <i className="fa-solid fa-pen-to-square text-sm" />
+                    </button>
+                    <button onClick={() => handleDelete(p.id)} disabled={deletingId === p.id}
+                      className="text-slate-400 hover:text-red-500 transition cursor-pointer disabled:opacity-40">
+                      <i className="fa-solid fa-trash text-sm" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -254,7 +291,6 @@ function ProductosTab({ proveedorId }: { proveedorId: number }) {
   );
 }
 
-// ─── Página principal ──────────────────────────────────────────────────────────
 export default function ProveedorDetallePage() {
   const router = useRouter();
   const params = useParams();
@@ -294,7 +330,6 @@ export default function ProveedorDetallePage() {
 
   return (
     <div className="p-4 sm:p-6 mx-auto">
-      {/* Header */}
       <div className="flex items-start justify-between mb-6 gap-3">
         <div className="flex items-center gap-3">
           <Link href="/dashboard/proveedores" className="text-slate-400 hover:text-slate-600 transition flex-shrink-0">
@@ -326,7 +361,6 @@ export default function ProveedorDetallePage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1 mb-5 border-b border-slate-200">
         {([["info", "fa-solid fa-building", "Información"], ["productos", "fa-solid fa-box", "Productos"]] as const).map(([key, icon, label]) => (
           <button key={key} onClick={() => setTab(key)}
@@ -337,7 +371,6 @@ export default function ProveedorDetallePage() {
         ))}
       </div>
 
-      {/* Tab: Info */}
       {tab === "info" && (
         <div className="space-y-4">
           <DetailSection title="Datos generales" icon="fa-solid fa-building">
@@ -410,7 +443,6 @@ export default function ProveedorDetallePage() {
         </div>
       )}
 
-      {/* Tab: Productos */}
       {tab === "productos" && <ProductosTab proveedorId={proveedor.id} />}
     </div>
   );

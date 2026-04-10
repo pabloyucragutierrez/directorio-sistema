@@ -36,18 +36,30 @@ async function request(path: string, options: RequestInit = {}) {
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  } catch {
+    throw new Error('No se pudo conectar con el servidor');
+  }
 
   if (res.status === 401) {
     removeToken();
     removeCurrentUser();
-    window.location.href = '/login';
+    if (path !== '/auth/login') {
+      window.location.href = '/login';
+    }
     throw new Error('No autorizado');
   }
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.message || 'Error en la solicitud');
+    const text = await res.text();
+    try {
+      const error = JSON.parse(text);
+      throw new Error(error.message || 'Error en la solicitud');
+    } catch {
+      throw new Error('Error en la solicitud');
+    }
   }
 
   return res.json();
@@ -58,7 +70,12 @@ async function requestFormData(path: string, formData: FormData, method = 'POST'
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}${path}`, { method, headers, body: formData });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, { method, headers, body: formData });
+  } catch {
+    throw new Error('No se pudo conectar con el servidor');
+  }
 
   if (res.status === 401) {
     removeToken();
@@ -68,8 +85,13 @@ async function requestFormData(path: string, formData: FormData, method = 'POST'
   }
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.message || 'Error en la solicitud');
+    const text = await res.text();
+    try {
+      const error = JSON.parse(text);
+      throw new Error(error.message || 'Error en la solicitud');
+    } catch {
+      throw new Error('Error en la solicitud');
+    }
   }
 
   return res.json();
