@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { api } from "@/lib/api";
 
-// ── Países y ciudades ───────────────────────────────────────────────────────
 const PAISES_CIUDADES: Record<string, string[]> = {
   Perú: ["Lima", "Arequipa", "Trujillo", "Chiclayo", "Cusco", "Piura", "Iquitos", "Huancayo", "Tacna", "Puno"],
   Colombia: ["Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena", "Cúcuta", "Bucaramanga", "Pereira", "Manizales"],
@@ -12,41 +12,21 @@ const PAISES_CIUDADES: Record<string, string[]> = {
   Bolivia: ["La Paz", "Santa Cruz de la Sierra", "Cochabamba", "Oruro", "Potosí", "Sucre", "Tarija", "Trinidad"],
   Brasil: ["São Paulo", "Río de Janeiro", "Brasília", "Salvador", "Fortaleza", "Belo Horizonte", "Manaus", "Curitiba"],
   Ecuador: ["Quito", "Guayaquil", "Cuenca", "Machala", "Durán", "Manta", "Portoviejo", "Loja", "Ambato"],
-  Paraguay: ["Asunción", "Ciudad del Este", "San Lorenzo", "Luque", "Capiatá", "Lambaré", "Fernando de la Mora"],
-  Uruguay: ["Montevideo", "Salto", "Paysandú", "Las Piedras", "Rivera", "Maldonado", "Tacuarembó"],
-  Venezuela: ["Caracas", "Maracaibo", "Valencia", "Barquisimeto", "Maracay", "Ciudad Guayana", "Maturín"],
-  Guyana: ["Georgetown", "Linden", "New Amsterdam", "Anna Regina"],
-  Surinam: ["Paramaribo", "Lelydorp", "Nieuw Nickerie", "Moengo"],
-  "Guyana Francesa": ["Cayena", "Saint-Laurent-du-Maroni", "Kourou"],
-  Guatemala: ["Ciudad de Guatemala", "Mixco", "Villa Nueva", "Quetzaltenango", "Huehuetenango", "Escuintla"],
-  Honduras: ["Tegucigalpa", "San Pedro Sula", "Choloma", "La Ceiba", "El Progreso", "Choluteca"],
-  "El Salvador": ["San Salvador", "Santa Ana", "San Miguel", "Mejicanos", "Soyapango", "Apopa"],
-  Nicaragua: ["Managua", "León", "Masaya", "Matagalpa", "Chinandega", "Granada"],
-  "Costa Rica": ["San José", "Alajuela", "Cartago", "Heredia", "Liberia", "Pérez Zeledón"],
-  Panamá: ["Ciudad de Panamá", "San Miguelito", "Tocumen", "La Chorrera", "Colón", "David"],
-  Belice: ["Belmopán", "Ciudad de Belice", "San Ignacio", "Orange Walk", "Dangriga"],
   México: ["Ciudad de México", "Guadalajara", "Monterrey", "Cancún", "Puebla", "Tijuana", "León", "Mérida"],
 };
 const PAISES = Object.keys(PAISES_CIUDADES).sort();
 
-// ── Rubros y subrubros ──────────────────────────────────────────────────────
 const RUBROS: Record<string, string[]> = {
-  "Agropecuario": ["Semillas y fertilizantes", "Maquinaria agrícola", "Ganadería", "Acuicultura", "Productos veterinarios"],
-  "Alimentos y Bebidas": ["Abarrotes", "Bebidas alcohólicas", "Bebidas no alcohólicas", "Panadería y repostería", "Lácteos", "Carnes y embutidos", "Frutas y verduras", "Snacks y confitería"],
-  "Automotriz": ["Vehículos", "Repuestos y accesorios", "Lubricantes", "Llantas", "Equipos de taller"],
-  "Construcción": ["Materiales de construcción", "Acabados y pisos", "Sanitarios y griferías", "Pinturas y adhesivos", "Herramientas", "Electricidad e iluminación"],
-  "Educación": ["Libros y útiles", "Mobiliario escolar", "Plataformas educativas", "Uniformes", "Equipos de laboratorio"],
-  "Hogar y Decoración": ["Muebles", "Electrodomésticos", "Iluminación decorativa", "Textiles para el hogar", "Artículos de cocina"],
-  "Logística y Transporte": ["Carga terrestre", "Carga aérea", "Carga marítima", "Almacenaje", "Courier y mensajería"],
-  "Salud y Farmacia": ["Medicamentos", "Dispositivos médicos", "Productos de higiene", "Suplementos nutricionales", "Equipos hospitalarios"],
-  "Servicios Profesionales": ["Consultoría", "Legal y notarial", "Contabilidad y finanzas", "Marketing y publicidad", "Diseño y creatividad"],
-  "Tecnología": ["Hardware", "Software", "Electrónica de consumo", "Telecomunicaciones", "Cómputo y accesorios", "Seguridad electrónica"],
-  "Textil y Confección": ["Ropa casual", "Ropa deportiva", "Ropa interior", "Calzado", "Accesorios de moda", "Telas e insumos"],
+  "Agropecuario": ["Semillas y fertilizantes", "Maquinaria agrícola", "Ganadería"],
+  "Alimentos y Bebidas": ["Abarrotes", "Bebidas alcohólicas", "Bebidas no alcohólicas", "Lácteos", "Carnes y embutidos"],
+  "Tecnología": ["Hardware", "Software", "Electrónica de consumo", "Telecomunicaciones"],
+  "Textil y Confección": ["Ropa casual", "Ropa deportiva", "Calzado", "Accesorios de moda"],
+  "Construcción": ["Materiales de construcción", "Herramientas", "Electricidad e iluminación"],
+  "Salud y Farmacia": ["Medicamentos", "Dispositivos médicos", "Suplementos nutricionales"],
   "Otro": ["Otro"],
 };
 const RUBROS_LIST = Object.keys(RUBROS);
 
-// ── Formas de pago ──────────────────────────────────────────────────────────
 const FORMAS_PAGO = [
   { value: "", label: "Seleccionar" },
   { value: "yape", label: "Yape" },
@@ -61,62 +41,95 @@ const FORMAS_PAGO = [
   { value: "paypal", label: "PayPal" },
 ];
 
-// ── Estado inicial del formulario ───────────────────────────────────────────
-const proveedorInicial = {
-  id: 1,
-  razonSocial: "Importaciones XYZ S.A.",
-  pais: "Perú",
-  ciudad: "Lima",
-  direccion: "Av. Principal 123",
-  distrito: "Miraflores",
-  codigoPostal: "15074",
-  referencia: "Cerca al parque Kennedy",
-  rubro: "Alimentos y Bebidas",
-  subrubro: "Abarrotes",
-  entrega: "si",
-  email: "contacto@xyz.com",
-  ruc: "20512345678",
-  licencia: "LIC-000456",
-  formaPago: "transferencia",
-  datosPago: "Banco BCP - Cta: 194-123456789-0-25 - CCI: 00219400012345678025",
-  telefono: "+51 1 234 5678",
-  whatsapp: "+51 987 654 321",
-  representante: "Juan Pérez",
-  dni: "12345678",
-  telefonoRep: "+51 987 000 111",
-  activo: true,
-};
+interface FormState {
+  razonSocial: string; pais: string; ciudad: string; direccion: string;
+  distrito: string; codigoPostal: string; referencia: string; rubro: string;
+  subrubro: string; entrega: string; email: string; ruc: string; licencia: string;
+  telefono: string; whatsapp: string; formaPago: string; datosPago: string;
+  representante: string; dni: string; telefonoRep: string; activo: boolean;
+}
 
-// ── Página ──────────────────────────────────────────────────────────────────
 export default function EditarProveedorPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = Number(params.id);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState(proveedorInicial);
+  const [fetching, setFetching] = useState(true);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState<FormState>({
+    razonSocial: "", pais: "", ciudad: "", direccion: "", distrito: "",
+    codigoPostal: "", referencia: "", rubro: "", subrubro: "", entrega: "",
+    email: "", ruc: "", licencia: "", telefono: "", whatsapp: "",
+    formaPago: "", datosPago: "", representante: "", dni: "", telefonoRep: "", activo: true,
+  });
+  const [copiaRuc, setCopiaRuc] = useState<File | null>(null);
+  const [copiaLicencia, setCopiaLicencia] = useState<File | null>(null);
+  const [copiaDni, setCopiaDni] = useState<File | null>(null);
 
-  const set = (field: string, value: string | boolean) =>
+  useEffect(() => {
+    api.getProveedor(id).then((data) => {
+      setForm({
+        razonSocial: data.razonSocial ?? "",
+        pais: data.pais ?? "",
+        ciudad: data.ciudad ?? "",
+        direccion: data.direccion ?? "",
+        distrito: data.distrito ?? "",
+        codigoPostal: data.codigoPostal ?? "",
+        referencia: data.referencia ?? "",
+        rubro: data.rubro ?? "",
+        subrubro: data.subrubro ?? "",
+        entrega: data.entrega ? "si" : "no",
+        email: data.email ?? "",
+        ruc: data.ruc ?? "",
+        licencia: data.licencia ?? "",
+        telefono: data.telefono ?? "",
+        whatsapp: data.whatsapp ?? "",
+        formaPago: data.formaPago ?? "",
+        datosPago: data.datosPago ?? "",
+        representante: data.representante ?? "",
+        dni: data.dni ?? "",
+        telefonoRep: data.telefonoRep ?? "",
+        activo: data.activo,
+      });
+    }).catch(() => setError("Error al cargar el proveedor"))
+      .finally(() => setFetching(false));
+  }, [id]);
+
+  const set = (field: keyof FormState, value: string | boolean) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
-  const handlePaisChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, pais: e.target.value, ciudad: "" }));
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+        if (key === "entrega") formData.append(key, value === "si" ? "true" : "false");
+        else formData.append(key, String(value));
+      });
+      if (copiaRuc) formData.append("copiaRuc", copiaRuc);
+      if (copiaLicencia) formData.append("copiaLicencia", copiaLicencia);
+      if (copiaDni) formData.append("copiaDni", copiaDni);
 
-  const handleRubroChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, rubro: e.target.value, subrubro: "" }));
+      await api.updateProveedor(id, formData);
+      router.push(`/dashboard/proveedores/${id}`);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al guardar cambios");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const ciudades = form.pais ? (PAISES_CIUDADES[form.pais] ?? []) : [];
   const subrubros = form.rubro ? (RUBROS[form.rubro] ?? []) : [];
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => router.push(`/dashboard/proveedores/${proveedorInicial.id}`), 800);
-  };
+  if (fetching) return <div className="p-6 text-center text-slate-400"><i className="fa-solid fa-spinner fa-spin text-2xl" /></div>;
 
   return (
     <div className="p-4 sm:p-6 mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <Link href={`/dashboard/proveedores/${proveedorInicial.id}`} className="text-slate-400 hover:text-slate-600 transition">
+        <Link href={`/dashboard/proveedores/${id}`} className="text-slate-400 hover:text-slate-600 transition">
           <i className="fa-solid fa-chevron-left text-sm" />
         </Link>
         <div>
@@ -125,100 +138,64 @@ export default function EditarProveedorPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          <i className="fa-solid fa-circle-exclamation mr-2" />{error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* ── DATOS GENERALES ── */}
         <Section title="Datos generales" icon="fa-solid fa-building">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Razón social" required>
-              <input type="text" value={form.razonSocial} onChange={(e) => set("razonSocial", e.target.value)} className={inputCls} />
-            </Field>
-
+            <Field label="Razón social" required><input type="text" value={form.razonSocial} onChange={(e) => set("razonSocial", e.target.value)} className={inputCls} /></Field>
             <Field label="País" required>
-              <select value={form.pais} onChange={handlePaisChange} className={inputCls}>
+              <select value={form.pais} onChange={(e) => { set("pais", e.target.value); set("ciudad", ""); }} className={inputCls}>
                 <option value="">Seleccionar país</option>
                 {PAISES.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </Field>
-
             <Field label="Ciudad" required>
-              <select
-                value={form.ciudad}
-                onChange={(e) => set("ciudad", e.target.value)}
-                disabled={!form.pais}
-                className={inputCls}
-              >
+              <select value={form.ciudad} onChange={(e) => set("ciudad", e.target.value)} disabled={!form.pais} className={inputCls}>
                 <option value="">{form.pais ? "Seleccionar ciudad" : "Primero selecciona un país"}</option>
                 {ciudades.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </Field>
-
-            <Field label="Dirección">
-              <input type="text" value={form.direccion} onChange={(e) => set("direccion", e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Distrito / Zona / Barrio">
-              <input type="text" value={form.distrito} onChange={(e) => set("distrito", e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Código postal">
-              <input type="text" value={form.codigoPostal} onChange={(e) => set("codigoPostal", e.target.value)} className={inputCls} />
-            </Field>
-
-            <Field label="Referencia" className="sm:col-span-2">
-              <input type="text" value={form.referencia} onChange={(e) => set("referencia", e.target.value)} className={inputCls} />
-            </Field>
-
+            <Field label="Dirección"><input type="text" value={form.direccion} onChange={(e) => set("direccion", e.target.value)} className={inputCls} /></Field>
+            <Field label="Distrito / Zona / Barrio"><input type="text" value={form.distrito} onChange={(e) => set("distrito", e.target.value)} className={inputCls} /></Field>
+            <Field label="Código postal"><input type="text" value={form.codigoPostal} onChange={(e) => set("codigoPostal", e.target.value)} className={inputCls} /></Field>
+            <Field label="Referencia" className="sm:col-span-2"><input type="text" value={form.referencia} onChange={(e) => set("referencia", e.target.value)} className={inputCls} /></Field>
             <Field label="Rubro" required>
-              <select value={form.rubro} onChange={handleRubroChange} className={inputCls}>
+              <select value={form.rubro} onChange={(e) => { set("rubro", e.target.value); set("subrubro", ""); }} className={inputCls}>
                 <option value="">Seleccionar rubro</option>
                 {RUBROS_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
             </Field>
-
             <Field label="Subrubro">
-              <select
-                value={form.subrubro}
-                onChange={(e) => set("subrubro", e.target.value)}
-                disabled={!form.rubro}
-                className={inputCls}
-              >
+              <select value={form.subrubro} onChange={(e) => set("subrubro", e.target.value)} disabled={!form.rubro} className={inputCls}>
                 <option value="">{form.rubro ? "Seleccionar subrubro" : "Primero selecciona un rubro"}</option>
                 {subrubros.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>
-
             <Field label="Entrega">
               <select value={form.entrega} onChange={(e) => set("entrega", e.target.value)} className={inputCls}>
-                <option value="">Seleccionar</option>
-                <option value="si">Sí</option>
-                <option value="no">No</option>
+                <option value="">Seleccionar</option><option value="si">Sí</option><option value="no">No</option>
               </select>
             </Field>
-            <Field label="Email" required>
-              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls} />
-            </Field>
+            <Field label="Email" required><input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls} /></Field>
             <Field label="Estado">
               <select value={form.activo ? "activo" : "inactivo"} onChange={(e) => set("activo", e.target.value === "activo")} className={inputCls}>
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
+                <option value="activo">Activo</option><option value="inactivo">Inactivo</option>
               </select>
             </Field>
           </div>
         </Section>
 
-        {/* ── DATOS FISCALES ── */}
         <Section title="Datos fiscales" icon="fa-solid fa-file-invoice">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="RUC / NIT / RUT" required>
-              <input type="text" value={form.ruc} onChange={(e) => set("ruc", e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Licencia Nro.">
-              <input type="text" value={form.licencia} onChange={(e) => set("licencia", e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Copia RUC / NIT / RUT">
-              <input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} />
-            </Field>
-            <Field label="Copia Licencia">
-              <input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} />
-            </Field>
+            <Field label="RUC / NIT / RUT" required><input type="text" value={form.ruc} onChange={(e) => set("ruc", e.target.value)} className={inputCls} /></Field>
+            <Field label="Licencia Nro."><input type="text" value={form.licencia} onChange={(e) => set("licencia", e.target.value)} className={inputCls} /></Field>
+            <Field label="Copia RUC / NIT / RUT"><input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} onChange={(e) => setCopiaRuc(e.target.files?.[0] ?? null)} /></Field>
+            <Field label="Copia Licencia"><input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} onChange={(e) => setCopiaLicencia(e.target.files?.[0] ?? null)} /></Field>
             <Field label="Forma de pago">
               <select value={form.formaPago} onChange={(e) => set("formaPago", e.target.value)} className={inputCls}>
                 {FORMAS_PAGO.map((fp) => <option key={fp.value} value={fp.value}>{fp.label}</option>)}
@@ -230,50 +207,26 @@ export default function EditarProveedorPage() {
           </div>
         </Section>
 
-        {/* ── CONTACTO ── */}
         <Section title="Contacto" icon="fa-solid fa-phone">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Teléfono">
-              <input type="tel" value={form.telefono} onChange={(e) => set("telefono", e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="WhatsApp">
-              <input type="tel" value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} className={inputCls} />
-            </Field>
+            <Field label="Teléfono"><input type="tel" value={form.telefono} onChange={(e) => set("telefono", e.target.value)} className={inputCls} /></Field>
+            <Field label="WhatsApp"><input type="tel" value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} className={inputCls} /></Field>
           </div>
         </Section>
 
-        {/* ── REPRESENTANTE LEGAL ── */}
         <Section title="Representante legal" icon="fa-solid fa-user-tie">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Nombre completo" required>
-              <input type="text" value={form.representante} onChange={(e) => set("representante", e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="DNI / CI / ID" required>
-              <input type="text" value={form.dni} onChange={(e) => set("dni", e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Teléfono">
-              <input type="tel" value={form.telefonoRep} onChange={(e) => set("telefonoRep", e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Copia DNI / CI / ID">
-              <input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} />
-            </Field>
+            <Field label="Nombre completo" required><input type="text" value={form.representante} onChange={(e) => set("representante", e.target.value)} className={inputCls} /></Field>
+            <Field label="DNI / CI / ID" required><input type="text" value={form.dni} onChange={(e) => set("dni", e.target.value)} className={inputCls} /></Field>
+            <Field label="Teléfono"><input type="tel" value={form.telefonoRep} onChange={(e) => set("telefonoRep", e.target.value)} className={inputCls} /></Field>
+            <Field label="Copia DNI / CI / ID"><input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} onChange={(e) => setCopiaDni(e.target.files?.[0] ?? null)} /></Field>
           </div>
         </Section>
 
         <div className="flex items-center justify-end gap-3 pt-2">
-          <Link href={`/dashboard/proveedores/${proveedorInicial.id}`} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition">
-            Cancelar
-          </Link>
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2"
-          >
-            {loading ? (
-              <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</>
-            ) : (
-              <><i className="fa-solid fa-floppy-disk" /> Guardar cambios</>
-            )}
+          <Link href={`/dashboard/proveedores/${id}`} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition">Cancelar</Link>
+          <button type="submit" disabled={loading} className="bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+            {loading ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</> : <><i className="fa-solid fa-floppy-disk" /> Guardar cambios</>}
           </button>
         </div>
       </form>
@@ -288,8 +241,7 @@ function Section({ title, icon, children }: { title: string; icon: string; child
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
       <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-        <i className={`${icon} text-blue-400`} />
-        {title}
+        <i className={`${icon} text-blue-400`} />{title}
       </h2>
       {children}
     </div>

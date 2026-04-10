@@ -1,24 +1,54 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import { api } from "@/lib/api";
 
-const proveedor = {
-  id: 1,
-  razonSocial: "Importaciones XYZ S.A.",
-  pais: "Perú", ciudad: "Lima", direccion: "Av. Principal 123",
-  distrito: "Miraflores", codigoPostal: "15074", referencia: "Cerca al parque Kennedy",
-  rubro: "Alimentos y Bebidas", subrubro: "Abarrotes", entrega: "Sí",
-  email: "contacto@xyz.com", ruc: "20512345678", licencia: "LIC-000456",
-  copiaRuc: "copia_ruc.pdf", copiaLicencia: "licencia.pdf",
-  telefono: "+51 1 234 5678", whatsapp: "+51 987 654 321",
-  representante: "Juan Pérez", dni: "12345678", telefonoRep: "+51 987 000 111",
-  formaPago: "Transferencia bancaria",
-  datosPago: "Banco BCP - Cta: 194-123456789-0-25 - CCI: 00219400012345678025",
-  activo: true,
-};
+interface Proveedor {
+  id: number;
+  razonSocial: string;
+  pais: string;
+  ciudad: string;
+  direccion?: string;
+  distrito?: string;
+  codigoPostal?: string;
+  referencia?: string;
+  rubro: string;
+  subrubro?: string;
+  entrega: boolean;
+  email: string;
+  ruc: string;
+  licencia?: string;
+  copiaRucUrl?: string;
+  copiaLicenciaUrl?: string;
+  telefono?: string;
+  whatsapp?: string;
+  representante: string;
+  dni: string;
+  telefonoRep?: string;
+  copiaDniUrl?: string;
+  formaPago?: string;
+  datosPago?: string;
+  activo: boolean;
+}
 
 export default function ProveedorDetallePage() {
   const router = useRouter();
+  const params = useParams();
+  const id = Number(params.id);
+  const [proveedor, setProveedor] = useState<Proveedor | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api.getProveedor(id)
+      .then(setProveedor)
+      .catch(() => setError("Error al cargar el proveedor"))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) return <div className="p-6 text-center text-slate-400"><i className="fa-solid fa-spinner fa-spin text-2xl" /></div>;
+  if (error || !proveedor) return <div className="p-6 text-center text-red-500">{error || "Proveedor no encontrado"}</div>;
 
   return (
     <div className="p-4 sm:p-6 mx-auto">
@@ -42,22 +72,34 @@ export default function ProveedorDetallePage() {
 
       <div className="space-y-4">
         <DetailSection title="Datos generales" icon="fa-solid fa-building" rows={[
-          ["Razón social", proveedor.razonSocial], ["País", proveedor.pais], ["Ciudad", proveedor.ciudad],
-          ["Dirección", proveedor.direccion], ["Distrito / Zona", proveedor.distrito],
-          ["Código postal", proveedor.codigoPostal], ["Referencia", proveedor.referencia],
-          ["Rubro", proveedor.rubro], ["Subrubro", proveedor.subrubro],
-          ["Entrega", proveedor.entrega], ["Email", proveedor.email],
+          ["Razón social", proveedor.razonSocial],
+          ["País", proveedor.pais],
+          ["Ciudad", proveedor.ciudad],
+          ["Dirección", proveedor.direccion ?? ""],
+          ["Distrito / Zona", proveedor.distrito ?? ""],
+          ["Código postal", proveedor.codigoPostal ?? ""],
+          ["Referencia", proveedor.referencia ?? ""],
+          ["Rubro", proveedor.rubro],
+          ["Subrubro", proveedor.subrubro ?? ""],
+          ["Entrega", proveedor.entrega ? "Sí" : "No"],
+          ["Email", proveedor.email],
         ]} />
         <DetailSection title="Datos fiscales" icon="fa-solid fa-file-invoice" rows={[
-          ["RUC / NIT / RUT", proveedor.ruc], ["Licencia Nro.", proveedor.licencia],
-          ["Copia RUC / NIT / RUT", proveedor.copiaRuc], ["Copia Licencia", proveedor.copiaLicencia],
-          ["Forma de pago", proveedor.formaPago], ["Datos para pago", proveedor.datosPago],
+          ["RUC / NIT / RUT", proveedor.ruc],
+          ["Licencia Nro.", proveedor.licencia ?? ""],
+          ["Copia RUC", proveedor.copiaRucUrl ?? ""],
+          ["Copia Licencia", proveedor.copiaLicenciaUrl ?? ""],
+          ["Forma de pago", proveedor.formaPago ?? ""],
+          ["Datos para pago", proveedor.datosPago ?? ""],
         ]} />
         <DetailSection title="Contacto" icon="fa-solid fa-phone" rows={[
-          ["Teléfono", proveedor.telefono], ["WhatsApp", proveedor.whatsapp],
+          ["Teléfono", proveedor.telefono ?? ""],
+          ["WhatsApp", proveedor.whatsapp ?? ""],
         ]} />
         <DetailSection title="Representante legal" icon="fa-solid fa-user-tie" rows={[
-          ["Nombre", proveedor.representante], ["DNI / CI / ID", proveedor.dni], ["Teléfono", proveedor.telefonoRep],
+          ["Nombre", proveedor.representante],
+          ["DNI / CI / ID", proveedor.dni],
+          ["Teléfono", proveedor.telefonoRep ?? ""],
         ]} />
       </div>
 

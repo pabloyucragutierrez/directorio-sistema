@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { removeToken, getToken } from "@/lib/api";
 
 const navItems = [
   { label: "Proveedores", href: "/dashboard/proveedores", icon: <i className="fa-solid fa-building w-4 text-center" /> },
@@ -17,6 +18,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  useEffect(() => {
+    const token = getToken();
+    if (!token) router.push("/login");
+  }, [router]);
+
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   useEffect(() => {
@@ -24,9 +30,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
+  const handleLogout = () => {
+    removeToken();
+    router.push("/login");
+  };
+
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
     <aside className={`bg-blue-800 flex flex-col h-full ${mobile ? "w-64" : collapsed ? "w-16" : "w-56"} ${mobile ? "" : "flex-shrink-0 transition-all duration-300"}`}>
-      {/* Header */}
       <div className="px-3 py-4 border-b border-blue-700 flex items-center justify-between min-h-[60px]">
         {(!collapsed || mobile) && (
           <div className="flex items-center gap-2.5 overflow-hidden">
@@ -45,24 +55,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         )}
         {!mobile && !collapsed && (
-          <button onClick={() => setCollapsed(true)} className="text-blue-300 hover:text-white hover:bg-white/10 rounded-md p-1.5 transition-all duration-150 cursor-pointer flex-shrink-0 ml-auto" title="Colapsar menú">
+          <button onClick={() => setCollapsed(true)} className="text-blue-300 hover:text-white hover:bg-white/10 rounded-md p-1.5 transition-all duration-150 cursor-pointer flex-shrink-0 ml-auto">
             <i className="fa-solid fa-angles-left text-xs" />
           </button>
         )}
         {mobile && (
-          <button onClick={() => setMobileOpen(false)} className="text-blue-300 hover:text-white hover:bg-white/10 rounded-md p-1.5 transition-all duration-150 cursor-pointer flex-shrink-0 ml-auto" title="Cerrar menú">
+          <button onClick={() => setMobileOpen(false)} className="text-blue-300 hover:text-white hover:bg-white/10 rounded-md p-1.5 transition-all duration-150 cursor-pointer flex-shrink-0 ml-auto">
             <i className="fa-solid fa-xmark text-sm" />
           </button>
         )}
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-2 py-4 space-y-0.5">
         {(!collapsed || mobile) && (
           <p className="text-[10px] font-medium text-blue-300 uppercase tracking-widest px-2 mb-2">Módulos</p>
         )}
         {collapsed && !mobile && (
-          <button onClick={() => setCollapsed(false)} className="w-full flex items-center justify-center p-2 rounded-lg text-blue-300 hover:text-white hover:bg-white/10 transition-all duration-150 cursor-pointer mb-2" title="Expandir menú">
+          <button onClick={() => setCollapsed(false)} className="w-full flex items-center justify-center p-2 rounded-lg text-blue-300 hover:text-white hover:bg-white/10 transition-all duration-150 cursor-pointer mb-2">
             <i className="fa-solid fa-angles-right text-xs" />
           </button>
         )}
@@ -82,14 +91,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         })}
       </nav>
 
-      {/* Footer usuario */}
       <div className="px-3 py-4 border-t border-blue-700">
         {collapsed && !mobile ? (
           <div className="flex flex-col items-center gap-3">
             <div className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
               <span className="text-xs font-semibold text-white">AD</span>
             </div>
-            <button onClick={() => router.push("/login")} className="text-blue-300 hover:text-white transition cursor-pointer" title="Cerrar sesión">
+            <button onClick={handleLogout} className="text-blue-300 hover:text-white transition cursor-pointer">
               <i className="fa-solid fa-right-from-bracket text-sm" />
             </button>
           </div>
@@ -102,7 +110,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <p className="text-xs font-medium text-white truncate">Administrador</p>
               <p className="text-[10px] text-blue-300 truncate">admin@empresa.com</p>
             </div>
-            <button onClick={() => router.push("/login")} className="text-blue-300 hover:text-white transition cursor-pointer" title="Cerrar sesión">
+            <button onClick={handleLogout} className="text-blue-300 hover:text-white transition cursor-pointer">
               <i className="fa-solid fa-right-from-bracket text-sm" />
             </button>
           </div>
@@ -113,12 +121,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden">
-      {/* SIDEBAR DESKTOP */}
       <div className="hidden md:flex">
         <SidebarContent />
       </div>
 
-      {/* SIDEBAR MÓVIL */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
@@ -128,9 +134,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       )}
 
-      {/* CONTENIDO PRINCIPAL */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Topbar móvil — SIN icono de cerrar sesión */}
         <header className="md:hidden flex items-center justify-between px-4 py-3 bg-blue-800 border-b border-blue-700 flex-shrink-0">
           <button onClick={() => setMobileOpen(true)} className="text-blue-200 hover:text-white transition cursor-pointer p-1">
             <i className="fa-solid fa-bars text-lg" />
@@ -141,7 +145,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <span className="text-sm font-semibold text-white">Directorio</span>
           </div>
-          {/* Espacio vacío para mantener centrado el logo */}
           <div className="w-8" />
         </header>
 

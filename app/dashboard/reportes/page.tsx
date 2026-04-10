@@ -1,23 +1,43 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
 
-const stats = [
-  { label: "Total proveedores", value: "24", color: "text-blue-700", icon: "fa-solid fa-building" },
-  { label: "Pedidos este mes", value: "38", color: "text-slate-800", icon: "fa-solid fa-clipboard-list" },
-  { label: "Calificación promedio", value: "4.1", color: "text-amber-600", icon: "fa-solid fa-star" },
-  { label: "Tasa de entrega", value: "87%", color: "text-emerald-700", icon: "fa-solid fa-truck" },
-];
-
-const pedidos = [
-  { proveedor: "Importaciones XYZ S.A.", total: 12, completados: 11, calificacion: 4.5 },
-  { proveedor: "Distribuidora Global Ltda.", total: 8, completados: 6, calificacion: 3.8 },
-  { proveedor: "Tech Supplies Inc.", total: 5, completados: 3, calificacion: 2.9 },
-  { proveedor: "Comercial Andina S.R.L.", total: 3, completados: 3, calificacion: 4.1 },
-];
+interface Stat { label: string; value: string; color: string; icon: string; }
+interface ReporteRow { proveedor: string; pais: string; total: number; completados: number; calificacion: number; }
 
 export default function ReportesPage() {
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
+  const [stats, setStats] = useState<Stat[]>([]);
+  const [reporte, setReporte] = useState<ReporteRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async (d?: string, h?: string) => {
+    setLoading(true);
+    try {
+      const [statsData, reporteData] = await Promise.all([
+        api.getStats(),
+        api.getReporte(d, h),
+      ]);
+      setStats([
+        { label: "Total proveedores", value: String(statsData.totalProveedores), color: "text-blue-700", icon: "fa-solid fa-building" },
+        { label: "Pedidos este mes", value: String(statsData.pedidosEsteMes), color: "text-slate-800", icon: "fa-solid fa-clipboard-list" },
+        { label: "Calificación promedio", value: String(statsData.calificacionPromedio), color: "text-amber-600", icon: "fa-solid fa-star" },
+        { label: "Tasa de entrega", value: `${statsData.tasaEntrega}%`, color: "text-emerald-700", icon: "fa-solid fa-truck" },
+      ]);
+      setReporte(reporteData);
+    } catch {
+      // silencioso
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFiltrar = () => fetchData(desde || undefined, hasta || undefined);
 
   const inputCls = "bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition w-full";
 
@@ -28,28 +48,24 @@ export default function ReportesPage() {
         <p className="text-sm text-slate-500 mt-0.5">Resumen de actividad del directorio</p>
       </div>
 
-      {/* Filtros — apilados en móvil */}
       <div className="flex flex-col sm:flex-row sm:items-end gap-3 mb-6">
         <div className="flex-1 sm:flex-none">
-          <label className="block text-xs text-slate-500 mb-1">
-            <i className="fa-regular fa-calendar mr-1" />Desde
-          </label>
+          <label className="block text-xs text-slate-500 mb-1"><i className="fa-regular fa-calendar mr-1" />Desde</label>
           <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className={inputCls} />
         </div>
         <div className="flex-1 sm:flex-none">
-          <label className="block text-xs text-slate-500 mb-1">
-            <i className="fa-regular fa-calendar mr-1" />Hasta
-          </label>
+          <label className="block text-xs text-slate-500 mb-1"><i className="fa-regular fa-calendar mr-1" />Hasta</label>
           <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className={inputCls} />
         </div>
-        <button className="bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center justify-center gap-2">
+        <button onClick={handleFiltrar} className="bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center justify-center gap-2">
           <i className="fa-solid fa-filter" />Filtrar
         </button>
       </div>
 
-      {/* Stats — 2 cols en móvil, 4 en desktop */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        {stats.map((s) => (
+        {loading ? (
+          <div className="col-span-4 text-center text-slate-400 py-6"><i className="fa-solid fa-spinner fa-spin text-2xl" /></div>
+        ) : stats.map((s) => (
           <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs text-slate-400 leading-tight">{s.label}</p>
@@ -62,15 +78,11 @@ export default function ReportesPage() {
         ))}
       </div>
 
-      {/* Tabla con scroll horizontal */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
             <i className="fa-solid fa-chart-bar text-blue-400" />Rendimiento por proveedor
           </h2>
-          <button className="text-xs text-blue-600 hover:text-blue-800 font-medium transition cursor-pointer flex items-center gap-1">
-            <i className="fa-solid fa-download text-[10px]" />Exportar
-          </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -84,8 +96,8 @@ export default function ReportesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {pedidos.map((p) => {
-                const tasa = Math.round((p.completados / p.total) * 100);
+              {reporte.map((p) => {
+                const tasa = p.total > 0 ? Math.round((p.completados / p.total) * 100) : 0;
                 return (
                   <tr key={p.proveedor} className="hover:bg-blue-50/50 transition">
                     <td className="px-5 py-3.5 text-slate-800 font-medium whitespace-nowrap">{p.proveedor}</td>
@@ -108,6 +120,9 @@ export default function ReportesPage() {
                   </tr>
                 );
               })}
+              {reporte.length === 0 && !loading && (
+                <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-400">No hay datos disponibles</td></tr>
+              )}
             </tbody>
           </table>
         </div>

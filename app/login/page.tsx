@@ -2,22 +2,32 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { api, setToken } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => { router.push("/dashboard/proveedores"); }, 800);
+    setError("");
+    try {
+      const data = await api.login(email, password);
+      setToken(data.access_token);
+      router.push("/dashboard/proveedores");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al iniciar sesión");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col lg:flex-row">
-      {/* Panel izquierdo decorativo — oculto en móvil */}
       <div className="hidden lg:flex lg:w-1/2 bg-blue-700 flex-col items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute top-[-80px] left-[-80px] w-72 h-72 rounded-full bg-blue-600 opacity-50" />
         <div className="absolute bottom-[-60px] right-[-60px] w-56 h-56 rounded-full bg-blue-800 opacity-60" />
@@ -45,10 +55,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Panel derecho - formulario */}
       <div className="flex-1 flex items-center justify-center px-6 py-10">
         <div className="w-full max-w-sm">
-          {/* Logo visible solo en móvil */}
           <div className="lg:hidden flex flex-col items-center mb-8 gap-3">
             <div className="w-16 h-16 bg-blue-700 rounded-2xl flex items-center justify-center overflow-hidden">
               <Image src="/logo-sistema.jpeg" alt="Logo" width={64} height={64} className="object-cover" />
@@ -60,6 +68,12 @@ export default function LoginPage() {
             <h1 className="text-2xl font-semibold text-slate-800 tracking-tight">Bienvenido</h1>
             <p className="text-sm text-slate-500 mt-1">Ingresa tus credenciales para continuar</p>
           </div>
+
+          {error && (
+            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+              <i className="fa-solid fa-circle-exclamation mr-2" />{error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

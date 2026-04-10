@@ -1,22 +1,40 @@
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useState } from "react";
+import { api } from "@/lib/api";
 
-const proveedores = [
-  { id: 1, razonSocial: "Importaciones XYZ S.A.", pais: "Perú", ciudad: "Lima", ruc: "20512345678", email: "contacto@xyz.com", activo: true },
-  { id: 2, razonSocial: "Distribuidora Global Ltda.", pais: "Colombia", ciudad: "Bogotá", ruc: "900123456-1", email: "info@global.co", activo: true },
-  { id: 3, razonSocial: "Tech Supplies Inc.", pais: "Chile", ciudad: "Santiago", ruc: "76543210-9", email: "ventas@tech.cl", activo: false },
-  { id: 4, razonSocial: "Comercial Andina S.R.L.", pais: "Bolivia", ciudad: "La Paz", ruc: "1023456789", email: "andina@gmail.com", activo: true },
-];
+interface Proveedor {
+  id: number;
+  razonSocial: string;
+  pais: string;
+  ciudad: string;
+  ruc: string;
+  email: string;
+  activo: boolean;
+}
 
 export default function ProveedoresPage() {
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filtered = proveedores.filter((p) =>
-    p.razonSocial.toLowerCase().includes(search.toLowerCase()) ||
-    p.pais.toLowerCase().includes(search.toLowerCase()) ||
-    p.ruc.includes(search)
-  );
+  useEffect(() => {
+    const timer = setTimeout(() => fetchProveedores(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const fetchProveedores = async (q?: string) => {
+    try {
+      setLoading(true);
+      const data = await api.getProveedores(q);
+      setProveedores(data);
+    } catch {
+      setError("Error al cargar proveedores");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6 max-w-full mx-auto">
@@ -45,6 +63,12 @@ export default function ProveedoresPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          <i className="fa-solid fa-circle-exclamation mr-2" />{error}
+        </div>
+      )}
+
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -59,34 +83,38 @@ export default function ProveedoresPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map((p) => (
-                <tr key={p.id} className="hover:bg-blue-50/50 transition">
-                  <td className="px-4 py-3.5 font-medium text-slate-800 whitespace-nowrap">{p.razonSocial}</td>
-                  <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">
-                    {p.pais} <span className="text-slate-300">·</span> {p.ciudad}
-                  </td>
-                  <td className="px-4 py-3.5 text-slate-500 font-mono text-xs whitespace-nowrap">{p.ruc}</td>
-                  <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">{p.email}</td>
-                  <td className="px-4 py-3.5 whitespace-nowrap">
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium ${p.activo ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
-                      <i className={`fa-solid fa-circle text-[6px] ${p.activo ? "text-emerald-500" : "text-slate-400"}`} />
-                      {p.activo ? "Activo" : "Inactivo"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                    <Link href={`/dashboard/proveedores/${p.id}`} className="text-xs text-slate-400 hover:text-blue-600 transition font-medium inline-flex items-center gap-1">
-                      Ver <i className="fa-solid fa-arrow-right text-[10px]" />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
+              {loading ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400">
-                    <i className="fa-solid fa-box-open text-2xl mb-2 block" />
-                    No se encontraron proveedores
+                    <i className="fa-solid fa-spinner fa-spin text-2xl mb-2 block" />Cargando...
                   </td>
                 </tr>
+              ) : proveedores.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400">
+                    <i className="fa-solid fa-box-open text-2xl mb-2 block" />No se encontraron proveedores
+                  </td>
+                </tr>
+              ) : (
+                proveedores.map((p) => (
+                  <tr key={p.id} className="hover:bg-blue-50/50 transition">
+                    <td className="px-4 py-3.5 font-medium text-slate-800 whitespace-nowrap">{p.razonSocial}</td>
+                    <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">{p.pais} <span className="text-slate-300">·</span> {p.ciudad}</td>
+                    <td className="px-4 py-3.5 text-slate-500 font-mono text-xs whitespace-nowrap">{p.ruc}</td>
+                    <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">{p.email}</td>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium ${p.activo ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                        <i className={`fa-solid fa-circle text-[6px] ${p.activo ? "text-emerald-500" : "text-slate-400"}`} />
+                        {p.activo ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                      <Link href={`/dashboard/proveedores/${p.id}`} className="text-xs text-slate-400 hover:text-blue-600 transition font-medium inline-flex items-center gap-1">
+                        Ver <i className="fa-solid fa-arrow-right text-[10px]" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

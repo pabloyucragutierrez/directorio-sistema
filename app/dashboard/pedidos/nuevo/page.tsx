@@ -1,14 +1,26 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { api } from "@/lib/api";
 
 interface Producto { id: number; nombre: string; cantidad: number; precio: number; }
+interface Proveedor { id: number; razonSocial: string; }
 
 export default function NuevoPedidoPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const [proveedorId, setProveedorId] = useState("");
+  const [numero, setNumero] = useState("");
+  const [fecha, setFecha] = useState("");
+  const [hora, setHora] = useState("");
   const [productos, setProductos] = useState<Producto[]>([{ id: 1, nombre: "", cantidad: 1, precio: 0 }]);
+
+  useEffect(() => {
+    api.getProveedores().then(setProveedores).catch(() => {});
+  }, []);
 
   const addProducto = () => setProductos((p) => [...p, { id: Date.now(), nombre: "", cantidad: 1, precio: 0 }]);
   const removeProducto = (id: number) => setProductos((p) => p.filter((x) => x.id !== id));
@@ -16,10 +28,24 @@ export default function NuevoPedidoPage() {
     setProductos((p) => p.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
   const total = productos.reduce((acc, p) => acc + p.cantidad * p.precio, 0);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => router.push("/dashboard/pedidos"), 800);
+    setError("");
+    try {
+      const fechaHora = fecha && hora ? new Date(`${fecha}T${hora}:00`).toISOString() : new Date().toISOString();
+      await api.createPedido({
+        numero,
+        proveedorId: Number(proveedorId),
+        fecha: fechaHora,
+        productos: productos.map(({ nombre, cantidad, precio }) => ({ nombre, cantidad, precio })),
+      });
+      router.push("/dashboard/pedidos");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al guardar pedido");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -34,6 +60,8 @@ export default function NuevoPedidoPage() {
         </div>
       </div>
 
+      {error && <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600"><i className="fa-solid fa-circle-exclamation mr-2" />{error}</div>}
+
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -42,24 +70,22 @@ export default function NuevoPedidoPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">Nro. de pedido <span className="text-red-500">*</span></label>
-              <input type="text" placeholder="PED-0004" className={inputCls} />
+              <input type="text" value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="PED-0004" required className={inputCls} />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">Proveedor <span className="text-red-500">*</span></label>
-              <select className={inputCls}>
+              <select value={proveedorId} onChange={(e) => setProveedorId(e.target.value)} required className={inputCls}>
                 <option value="">Seleccionar proveedor</option>
-                <option>Importaciones XYZ S.A.</option>
-                <option>Distribuidora Global Ltda.</option>
-                <option>Tech Supplies Inc.</option>
+                {proveedores.map((p) => <option key={p.id} value={p.id}>{p.razonSocial}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">Fecha <span className="text-red-500">*</span></label>
-              <input type="date" className={inputCls} />
+              <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required className={inputCls} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">Hora <span className="text-red-500">*</span></label>
-              <input type="time" className={inputCls} />
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">Hora</label>
+              <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className={inputCls} />
             </div>
           </div>
         </div>
@@ -74,7 +100,6 @@ export default function NuevoPedidoPage() {
             </button>
           </div>
           <div className="space-y-3">
-            {/* Cabecera — oculta en móvil muy pequeño */}
             <div className="hidden sm:grid grid-cols-12 gap-2 px-1">
               <span className="col-span-5 text-xs text-slate-400">Producto</span>
               <span className="col-span-3 text-xs text-slate-400">Cantidad</span>
@@ -87,8 +112,8 @@ export default function NuevoPedidoPage() {
                 <button type="button" onClick={() => removeProducto(p.id)} className="col-span-1 sm:hidden text-slate-300 hover:text-red-500 transition cursor-pointer flex justify-center">
                   <i className="fa-solid fa-xmark" />
                 </button>
-                <input type="number" min={1} className={`col-span-5 sm:col-span-3 ${inputCls}`} placeholder="Cant." value={p.cantidad} onChange={(e) => updateProducto(p.id, "cantidad", Number(e.target.value))} />
-                <input type="number" min={0} step={0.01} className={`col-span-6 sm:col-span-3 ${inputCls}`} placeholder="Precio" value={p.precio} onChange={(e) => updateProducto(p.id, "precio", Number(e.target.value))} />
+                <input type="number" min={1} className={`col-span-5 sm:col-span-3 ${inputCls}`} value={p.cantidad} onChange={(e) => updateProducto(p.id, "cantidad", Number(e.target.value))} />
+                <input type="number" min={0} step={0.01} className={`col-span-6 sm:col-span-3 ${inputCls}`} value={p.precio} onChange={(e) => updateProducto(p.id, "precio", Number(e.target.value))} />
                 <button type="button" onClick={() => removeProducto(p.id)} className="hidden sm:flex col-span-1 text-slate-300 hover:text-red-500 transition cursor-pointer justify-center">
                   <i className="fa-solid fa-xmark" />
                 </button>

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { api } from "@/lib/api";
 
 const PAISES_CIUDADES: Record<string, string[]> = {
   Perú: ["Lima", "Arequipa", "Trujillo", "Chiclayo", "Cusco", "Piura", "Iquitos", "Huancayo", "Tacna", "Puno"],
@@ -14,16 +15,6 @@ const PAISES_CIUDADES: Record<string, string[]> = {
   Paraguay: ["Asunción", "Ciudad del Este", "San Lorenzo", "Luque", "Capiatá", "Lambaré", "Fernando de la Mora"],
   Uruguay: ["Montevideo", "Salto", "Paysandú", "Las Piedras", "Rivera", "Maldonado", "Tacuarembó"],
   Venezuela: ["Caracas", "Maracaibo", "Valencia", "Barquisimeto", "Maracay", "Ciudad Guayana", "Maturín"],
-  Guyana: ["Georgetown", "Linden", "New Amsterdam", "Anna Regina"],
-  Surinam: ["Paramaribo", "Lelydorp", "Nieuw Nickerie", "Moengo"],
-  "Guyana Francesa": ["Cayena", "Saint-Laurent-du-Maroni", "Kourou"],
-  Guatemala: ["Ciudad de Guatemala", "Mixco", "Villa Nueva", "Quetzaltenango", "Huehuetenango", "Escuintla"],
-  Honduras: ["Tegucigalpa", "San Pedro Sula", "Choloma", "La Ceiba", "El Progreso", "Choluteca"],
-  "El Salvador": ["San Salvador", "Santa Ana", "San Miguel", "Mejicanos", "Soyapango", "Apopa"],
-  Nicaragua: ["Managua", "León", "Masaya", "Matagalpa", "Chinandega", "Granada"],
-  "Costa Rica": ["San José", "Alajuela", "Cartago", "Heredia", "Liberia", "Pérez Zeledón"],
-  Panamá: ["Ciudad de Panamá", "San Miguelito", "Tocumen", "La Chorrera", "Colón", "David"],
-  Belice: ["Belmopán", "Ciudad de Belice", "San Ignacio", "Orange Walk", "Dangriga"],
   México: ["Ciudad de México", "Guadalajara", "Monterrey", "Cancún", "Puebla", "Tijuana", "León", "Mérida"],
 };
 const PAISES = Object.keys(PAISES_CIUDADES).sort();
@@ -31,15 +22,12 @@ const PAISES = Object.keys(PAISES_CIUDADES).sort();
 const RUBROS: Record<string, string[]> = {
   "Agropecuario": ["Semillas y fertilizantes", "Maquinaria agrícola", "Ganadería", "Acuicultura", "Productos veterinarios"],
   "Alimentos y Bebidas": ["Abarrotes", "Bebidas alcohólicas", "Bebidas no alcohólicas", "Panadería y repostería", "Lácteos", "Carnes y embutidos", "Frutas y verduras", "Snacks y confitería"],
-  "Automotriz": ["Vehículos", "Repuestos y accesorios", "Lubricantes", "Llantas", "Equipos de taller"],
-  "Construcción": ["Materiales de construcción", "Acabados y pisos", "Sanitarios y griferías", "Pinturas y adhesivos", "Herramientas", "Electricidad e iluminación"],
-  "Educación": ["Libros y útiles", "Mobiliario escolar", "Plataformas educativas", "Uniformes", "Equipos de laboratorio"],
-  "Hogar y Decoración": ["Muebles", "Electrodomésticos", "Iluminación decorativa", "Textiles para el hogar", "Artículos de cocina"],
-  "Logística y Transporte": ["Carga terrestre", "Carga aérea", "Carga marítima", "Almacenaje", "Courier y mensajería"],
-  "Salud y Farmacia": ["Medicamentos", "Dispositivos médicos", "Productos de higiene", "Suplementos nutricionales", "Equipos hospitalarios"],
-  "Servicios Profesionales": ["Consultoría", "Legal y notarial", "Contabilidad y finanzas", "Marketing y publicidad", "Diseño y creatividad"],
   "Tecnología": ["Hardware", "Software", "Electrónica de consumo", "Telecomunicaciones", "Cómputo y accesorios", "Seguridad electrónica"],
   "Textil y Confección": ["Ropa casual", "Ropa deportiva", "Ropa interior", "Calzado", "Accesorios de moda", "Telas e insumos"],
+  "Construcción": ["Materiales de construcción", "Acabados y pisos", "Sanitarios y griferías", "Pinturas y adhesivos", "Herramientas", "Electricidad e iluminación"],
+  "Salud y Farmacia": ["Medicamentos", "Dispositivos médicos", "Productos de higiene", "Suplementos nutricionales", "Equipos hospitalarios"],
+  "Logística y Transporte": ["Carga terrestre", "Carga aérea", "Carga marítima", "Almacenaje", "Courier y mensajería"],
+  "Servicios Profesionales": ["Consultoría", "Legal y notarial", "Contabilidad y finanzas", "Marketing y publicidad", "Diseño y creatividad"],
   "Otro": ["Otro"],
 };
 const RUBROS_LIST = Object.keys(RUBROS);
@@ -61,17 +49,59 @@ const FORMAS_PAGO = [
 export default function NuevoProveedorPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [pais, setPais] = useState("");
   const [ciudad, setCiudad] = useState("");
   const [rubro, setRubro] = useState("");
   const [subrubro, setSubrubro] = useState("");
+  const [copiaRuc, setCopiaRuc] = useState<File | null>(null);
+  const [copiaLicencia, setCopiaLicencia] = useState<File | null>(null);
+  const [copiaDni, setCopiaDni] = useState<File | null>(null);
 
   const ciudades = pais ? (PAISES_CIUDADES[pais] ?? []) : [];
   const subrubros = rubro ? (RUBROS[rubro] ?? []) : [];
 
-  const handlePaisChange = (e: React.ChangeEvent<HTMLSelectElement>) => { setPais(e.target.value); setCiudad(""); };
-  const handleRubroChange = (e: React.ChangeEvent<HTMLSelectElement>) => { setRubro(e.target.value); setSubrubro(""); };
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); setLoading(true); setTimeout(() => router.push("/dashboard/proveedores"), 800); };
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      const form = e.currentTarget;
+      const formData = new FormData();
+
+      formData.append("razonSocial", (form.elements.namedItem("razonSocial") as HTMLInputElement).value);
+      formData.append("pais", pais);
+      formData.append("ciudad", ciudad);
+      formData.append("direccion", (form.elements.namedItem("direccion") as HTMLInputElement).value);
+      formData.append("distrito", (form.elements.namedItem("distrito") as HTMLInputElement).value);
+      formData.append("codigoPostal", (form.elements.namedItem("codigoPostal") as HTMLInputElement).value);
+      formData.append("referencia", (form.elements.namedItem("referencia") as HTMLInputElement).value);
+      formData.append("rubro", rubro);
+      formData.append("subrubro", subrubro);
+      formData.append("entrega", (form.elements.namedItem("entrega") as HTMLSelectElement).value === "si" ? "true" : "false");
+      formData.append("email", (form.elements.namedItem("email") as HTMLInputElement).value);
+      formData.append("ruc", (form.elements.namedItem("ruc") as HTMLInputElement).value);
+      formData.append("licencia", (form.elements.namedItem("licencia") as HTMLInputElement).value);
+      formData.append("telefono", (form.elements.namedItem("telefono") as HTMLInputElement).value);
+      formData.append("whatsapp", (form.elements.namedItem("whatsapp") as HTMLInputElement).value);
+      formData.append("formaPago", (form.elements.namedItem("formaPago") as HTMLSelectElement).value);
+      formData.append("datosPago", (form.elements.namedItem("datosPago") as HTMLTextAreaElement).value);
+      formData.append("representante", (form.elements.namedItem("representante") as HTMLInputElement).value);
+      formData.append("dni", (form.elements.namedItem("dni") as HTMLInputElement).value);
+      formData.append("telefonoRep", (form.elements.namedItem("telefonoRep") as HTMLInputElement).value);
+
+      if (copiaRuc) formData.append("copiaRuc", copiaRuc);
+      if (copiaLicencia) formData.append("copiaLicencia", copiaLicencia);
+      if (copiaDni) formData.append("copiaDni", copiaDni);
+
+      await api.createProveedor(formData);
+      router.push("/dashboard/proveedores");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al guardar proveedor");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6 mx-auto">
@@ -85,12 +115,18 @@ export default function NuevoProveedorPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          <i className="fa-solid fa-circle-exclamation mr-2" />{error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-5">
         <Section title="Datos generales" icon="fa-solid fa-building">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Razón social" required><input type="text" placeholder="Empresa S.A." className={inputCls} /></Field>
+            <Field label="Razón social" required><input name="razonSocial" type="text" placeholder="Empresa S.A." className={inputCls} /></Field>
             <Field label="País" required>
-              <select value={pais} onChange={handlePaisChange} className={inputCls}>
+              <select value={pais} onChange={(e) => { setPais(e.target.value); setCiudad(""); }} className={inputCls}>
                 <option value="">Seleccionar país</option>
                 {PAISES.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
@@ -101,12 +137,12 @@ export default function NuevoProveedorPage() {
                 {ciudades.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </Field>
-            <Field label="Dirección"><input type="text" placeholder="Av. Principal 123" className={inputCls} /></Field>
-            <Field label="Distrito / Zona / Barrio"><input type="text" placeholder="Miraflores" className={inputCls} /></Field>
-            <Field label="Código postal"><input type="text" placeholder="15074" className={inputCls} /></Field>
-            <Field label="Referencia" className="sm:col-span-2"><input type="text" placeholder="Cerca al parque..." className={inputCls} /></Field>
+            <Field label="Dirección"><input name="direccion" type="text" placeholder="Av. Principal 123" className={inputCls} /></Field>
+            <Field label="Distrito / Zona / Barrio"><input name="distrito" type="text" placeholder="Miraflores" className={inputCls} /></Field>
+            <Field label="Código postal"><input name="codigoPostal" type="text" placeholder="15074" className={inputCls} /></Field>
+            <Field label="Referencia" className="sm:col-span-2"><input name="referencia" type="text" placeholder="Cerca al parque..." className={inputCls} /></Field>
             <Field label="Rubro" required>
-              <select value={rubro} onChange={handleRubroChange} className={inputCls}>
+              <select value={rubro} onChange={(e) => { setRubro(e.target.value); setSubrubro(""); }} className={inputCls}>
                 <option value="">Seleccionar rubro</option>
                 {RUBROS_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
@@ -118,40 +154,46 @@ export default function NuevoProveedorPage() {
               </select>
             </Field>
             <Field label="Entrega">
-              <select className={inputCls}><option value="">Seleccionar</option><option value="si">Sí</option><option value="no">No</option></select>
+              <select name="entrega" className={inputCls}><option value="">Seleccionar</option><option value="si">Sí</option><option value="no">No</option></select>
             </Field>
-            <Field label="Email" required><input type="email" placeholder="contacto@empresa.com" className={inputCls} /></Field>
+            <Field label="Email" required><input name="email" type="email" placeholder="contacto@empresa.com" className={inputCls} /></Field>
           </div>
         </Section>
 
         <Section title="Datos fiscales" icon="fa-solid fa-file-invoice">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="RUC / NIT / RUT" required><input type="text" placeholder="20512345678" className={inputCls} /></Field>
-            <Field label="Licencia Nro."><input type="text" placeholder="LIC-000123" className={inputCls} /></Field>
-            <Field label="Copia RUC / NIT / RUT"><input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} /></Field>
-            <Field label="Copia Licencia"><input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} /></Field>
+            <Field label="RUC / NIT / RUT" required><input name="ruc" type="text" placeholder="20512345678" className={inputCls} /></Field>
+            <Field label="Licencia Nro."><input name="licencia" type="text" placeholder="LIC-000123" className={inputCls} /></Field>
+            <Field label="Copia RUC / NIT / RUT">
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} onChange={(e) => setCopiaRuc(e.target.files?.[0] ?? null)} />
+            </Field>
+            <Field label="Copia Licencia">
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} onChange={(e) => setCopiaLicencia(e.target.files?.[0] ?? null)} />
+            </Field>
             <Field label="Forma de pago">
-              <select className={inputCls}>{FORMAS_PAGO.map((fp) => <option key={fp.value} value={fp.value}>{fp.label}</option>)}</select>
+              <select name="formaPago" className={inputCls}>{FORMAS_PAGO.map((fp) => <option key={fp.value} value={fp.value}>{fp.label}</option>)}</select>
             </Field>
             <Field label="Datos para pago" className="sm:col-span-2">
-              <textarea rows={2} placeholder="Banco, cuenta, CCI, número Yape..." className={`${inputCls} resize-none`} />
+              <textarea name="datosPago" rows={2} placeholder="Banco, cuenta, CCI, número Yape..." className={`${inputCls} resize-none`} />
             </Field>
           </div>
         </Section>
 
         <Section title="Contacto" icon="fa-solid fa-phone">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Teléfono"><input type="tel" placeholder="+51 1 234 5678" className={inputCls} /></Field>
-            <Field label="WhatsApp"><input type="tel" placeholder="+51 987 654 321" className={inputCls} /></Field>
+            <Field label="Teléfono"><input name="telefono" type="tel" placeholder="+51 1 234 5678" className={inputCls} /></Field>
+            <Field label="WhatsApp"><input name="whatsapp" type="tel" placeholder="+51 987 654 321" className={inputCls} /></Field>
           </div>
         </Section>
 
         <Section title="Representante legal" icon="fa-solid fa-user-tie">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Nombre completo" required><input type="text" placeholder="Juan Pérez" className={inputCls} /></Field>
-            <Field label="DNI / CI / ID" required><input type="text" placeholder="12345678" className={inputCls} /></Field>
-            <Field label="Teléfono"><input type="tel" placeholder="+51 987 000 000" className={inputCls} /></Field>
-            <Field label="Copia DNI / CI / ID"><input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} /></Field>
+            <Field label="Nombre completo" required><input name="representante" type="text" placeholder="Juan Pérez" className={inputCls} /></Field>
+            <Field label="DNI / CI / ID" required><input name="dni" type="text" placeholder="12345678" className={inputCls} /></Field>
+            <Field label="Teléfono"><input name="telefonoRep" type="tel" placeholder="+51 987 000 000" className={inputCls} /></Field>
+            <Field label="Copia DNI / CI / ID">
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} onChange={(e) => setCopiaDni(e.target.files?.[0] ?? null)} />
+            </Field>
           </div>
         </Section>
 
