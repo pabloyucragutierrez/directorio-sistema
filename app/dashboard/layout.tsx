@@ -3,13 +3,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { removeToken, getToken } from "@/lib/api";
+import { removeToken, getToken, getCurrentUser, removeCurrentUser } from "@/lib/api";
 
 const navItems = [
   { label: "Proveedores", href: "/dashboard/proveedores", icon: <i className="fa-solid fa-building w-4 text-center" /> },
   { label: "Pedidos", href: "/dashboard/pedidos", icon: <i className="fa-solid fa-clipboard-list w-4 text-center" /> },
   { label: "Consultas", href: "/dashboard/consultas", icon: <i className="fa-solid fa-magnifying-glass w-4 text-center" /> },
   { label: "Reportes", href: "/dashboard/reportes", icon: <i className="fa-solid fa-chart-bar w-4 text-center" /> },
+  { label: "Usuarios", href: "/dashboard/usuarios", icon: <i className="fa-solid fa-users w-4 text-center" /> },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -17,10 +18,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ nombre: string; email: string } | null>(null);
 
   useEffect(() => {
     const token = getToken();
-    if (!token) router.push("/login");
+    if (!token) { router.push("/login"); return; }
+    const user = getCurrentUser();
+    setCurrentUser(user);
   }, [router]);
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
@@ -32,8 +36,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handleLogout = () => {
     removeToken();
+    removeCurrentUser();
     router.push("/login");
   };
+
+  const initials = currentUser?.nombre
+    ? currentUser.nombre.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
+    : "U";
 
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
     <aside className={`bg-blue-800 flex flex-col h-full ${mobile ? "w-64" : collapsed ? "w-16" : "w-56"} ${mobile ? "" : "flex-shrink-0 transition-all duration-300"}`}>
@@ -95,7 +104,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {collapsed && !mobile ? (
           <div className="flex flex-col items-center gap-3">
             <div className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-semibold text-white">AD</span>
+              <span className="text-xs font-semibold text-white">{initials}</span>
             </div>
             <button onClick={handleLogout} className="text-blue-300 hover:text-white transition cursor-pointer">
               <i className="fa-solid fa-right-from-bracket text-sm" />
@@ -104,11 +113,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         ) : (
           <div className="flex items-center gap-2.5 px-2">
             <div className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-semibold text-white">AD</span>
+              <span className="text-xs font-semibold text-white">{initials}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-white truncate">Administrador</p>
-              <p className="text-[10px] text-blue-300 truncate">admin@empresa.com</p>
+              <p className="text-xs font-medium text-white truncate">{currentUser?.nombre ?? "Usuario"}</p>
+              <p className="text-[10px] text-blue-300 truncate">{currentUser?.email ?? ""}</p>
             </div>
             <button onClick={handleLogout} className="text-blue-300 hover:text-white transition cursor-pointer">
               <i className="fa-solid fa-right-from-bracket text-sm" />

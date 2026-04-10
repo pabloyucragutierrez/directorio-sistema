@@ -12,9 +12,6 @@ const PAISES_CIUDADES: Record<string, string[]> = {
   Bolivia: ["La Paz", "Santa Cruz de la Sierra", "Cochabamba", "Oruro", "Potosí", "Sucre", "Tarija", "Trinidad"],
   Brasil: ["São Paulo", "Río de Janeiro", "Brasília", "Salvador", "Fortaleza", "Belo Horizonte", "Manaus", "Curitiba"],
   Ecuador: ["Quito", "Guayaquil", "Cuenca", "Machala", "Durán", "Manta", "Portoviejo", "Loja", "Ambato"],
-  Paraguay: ["Asunción", "Ciudad del Este", "San Lorenzo", "Luque", "Capiatá", "Lambaré", "Fernando de la Mora"],
-  Uruguay: ["Montevideo", "Salto", "Paysandú", "Las Piedras", "Rivera", "Maldonado", "Tacuarembó"],
-  Venezuela: ["Caracas", "Maracaibo", "Valencia", "Barquisimeto", "Maracay", "Ciudad Guayana", "Maturín"],
   México: ["Ciudad de México", "Guadalajara", "Monterrey", "Cancún", "Puebla", "Tijuana", "León", "Mérida"],
 };
 const PAISES = Object.keys(PAISES_CIUDADES).sort();
@@ -22,12 +19,15 @@ const PAISES = Object.keys(PAISES_CIUDADES).sort();
 const RUBROS: Record<string, string[]> = {
   "Agropecuario": ["Semillas y fertilizantes", "Maquinaria agrícola", "Ganadería", "Acuicultura", "Productos veterinarios"],
   "Alimentos y Bebidas": ["Abarrotes", "Bebidas alcohólicas", "Bebidas no alcohólicas", "Panadería y repostería", "Lácteos", "Carnes y embutidos", "Frutas y verduras", "Snacks y confitería"],
+  "Automotriz": ["Vehículos", "Repuestos y accesorios", "Lubricantes", "Llantas", "Equipos de taller"],
+  "Construcción": ["Materiales de construcción", "Acabados y pisos", "Sanitarios y griferías", "Pinturas y adhesivos", "Herramientas", "Electricidad e iluminación"],
+  "Educación": ["Libros y útiles", "Mobiliario escolar", "Plataformas educativas", "Uniformes", "Equipos de laboratorio"],
+  "Hogar y Decoración": ["Muebles", "Electrodomésticos", "Iluminación decorativa", "Textiles para el hogar", "Artículos de cocina"],
+  "Logística y Transporte": ["Carga terrestre", "Carga aérea", "Carga marítima", "Almacenaje", "Courier y mensajería"],
+  "Salud y Farmacia": ["Medicamentos", "Dispositivos médicos", "Productos de higiene", "Suplementos nutricionales", "Equipos hospitalarios"],
+  "Servicios Profesionales": ["Consultoría", "Legal y notarial", "Contabilidad y finanzas", "Marketing y publicidad", "Diseño y creatividad"],
   "Tecnología": ["Hardware", "Software", "Electrónica de consumo", "Telecomunicaciones", "Cómputo y accesorios", "Seguridad electrónica"],
   "Textil y Confección": ["Ropa casual", "Ropa deportiva", "Ropa interior", "Calzado", "Accesorios de moda", "Telas e insumos"],
-  "Construcción": ["Materiales de construcción", "Acabados y pisos", "Sanitarios y griferías", "Pinturas y adhesivos", "Herramientas", "Electricidad e iluminación"],
-  "Salud y Farmacia": ["Medicamentos", "Dispositivos médicos", "Productos de higiene", "Suplementos nutricionales", "Equipos hospitalarios"],
-  "Logística y Transporte": ["Carga terrestre", "Carga aérea", "Carga marítima", "Almacenaje", "Courier y mensajería"],
-  "Servicios Profesionales": ["Consultoría", "Legal y notarial", "Contabilidad y finanzas", "Marketing y publicidad", "Diseño y creatividad"],
   "Otro": ["Otro"],
 };
 const RUBROS_LIST = Object.keys(RUBROS);
@@ -45,6 +45,84 @@ const FORMAS_PAGO = [
   { value: "visa", label: "Visa / Mastercard" },
   { value: "paypal", label: "PayPal" },
 ];
+
+function FileInput({ label, onChange }: { label: string; onChange: (f: File | null) => void }) {
+  const [preview, setPreview] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleFile = (file: File | null) => {
+    onChange(file);
+    if (file) {
+      setFileName(file.name);
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (ev) => setPreview(ev.target?.result as string);
+        reader.readAsDataURL(file);
+      } else {
+        setPreview(null);
+      }
+    } else {
+      setFileName(null);
+      setPreview(null);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFile(e.target.files?.[0] ?? null);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFile(e.dataTransfer.files?.[0] ?? null);
+  };
+
+  const inputId = `file-${label.replace(/\s+/g, "-").toLowerCase()}`;
+
+  return (
+    <div>
+      <label className="block text-xs font-medium text-slate-600 mb-1.5">{label}</label>
+      <label
+        htmlFor={inputId}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={handleDrop}
+        className={`relative flex flex-col items-center justify-center w-full h-36 rounded-xl border-2 border-dashed cursor-pointer transition overflow-hidden
+          ${isDragging ? "border-blue-400 bg-blue-50" : preview ? "border-slate-200 bg-slate-50" : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/40"}`}
+      >
+        {preview ? (
+          <>
+            <img src={preview} alt="preview" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition">
+              <i className="fa-solid fa-arrow-up-from-bracket text-white text-xl mb-1" />
+              <span className="text-white text-xs font-medium">Cambiar imagen</span>
+            </div>
+          </>
+        ) : fileName ? (
+          <div className="flex flex-col items-center gap-2 px-4 text-center">
+            <i className="fa-solid fa-file-pdf text-red-400 text-3xl" />
+            <span className="text-xs text-slate-500 break-all line-clamp-2">{fileName}</span>
+            <span className="text-xs text-blue-500">Clic para cambiar</span>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2 px-4 text-center">
+            <i className="fa-solid fa-cloud-arrow-up text-slate-300 text-3xl" />
+            <span className="text-xs text-slate-400">Arrastra o haz clic para subir</span>
+            <span className="text-[10px] text-slate-300">JPG, PNG o PDF</span>
+          </div>
+        )}
+      </label>
+      <input
+        id={inputId}
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png"
+        className="hidden"
+        onChange={handleChange}
+      />
+    </div>
+  );
+}
 
 export default function NuevoProveedorPage() {
   const router = useRouter();
@@ -68,7 +146,6 @@ export default function NuevoProveedorPage() {
     try {
       const form = e.currentTarget;
       const formData = new FormData();
-
       formData.append("razonSocial", (form.elements.namedItem("razonSocial") as HTMLInputElement).value);
       formData.append("pais", pais);
       formData.append("ciudad", ciudad);
@@ -89,7 +166,6 @@ export default function NuevoProveedorPage() {
       formData.append("representante", (form.elements.namedItem("representante") as HTMLInputElement).value);
       formData.append("dni", (form.elements.namedItem("dni") as HTMLInputElement).value);
       formData.append("telefonoRep", (form.elements.namedItem("telefonoRep") as HTMLInputElement).value);
-
       if (copiaRuc) formData.append("copiaRuc", copiaRuc);
       if (copiaLicencia) formData.append("copiaLicencia", copiaLicencia);
       if (copiaDni) formData.append("copiaDni", copiaDni);
@@ -164,12 +240,8 @@ export default function NuevoProveedorPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="RUC / NIT / RUT" required><input name="ruc" type="text" placeholder="20512345678" className={inputCls} /></Field>
             <Field label="Licencia Nro."><input name="licencia" type="text" placeholder="LIC-000123" className={inputCls} /></Field>
-            <Field label="Copia RUC / NIT / RUT">
-              <input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} onChange={(e) => setCopiaRuc(e.target.files?.[0] ?? null)} />
-            </Field>
-            <Field label="Copia Licencia">
-              <input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} onChange={(e) => setCopiaLicencia(e.target.files?.[0] ?? null)} />
-            </Field>
+            <FileInput label="Copia RUC / NIT / RUT" onChange={setCopiaRuc} />
+            <FileInput label="Copia Licencia" onChange={setCopiaLicencia} />
             <Field label="Forma de pago">
               <select name="formaPago" className={inputCls}>{FORMAS_PAGO.map((fp) => <option key={fp.value} value={fp.value}>{fp.label}</option>)}</select>
             </Field>
@@ -191,9 +263,7 @@ export default function NuevoProveedorPage() {
             <Field label="Nombre completo" required><input name="representante" type="text" placeholder="Juan Pérez" className={inputCls} /></Field>
             <Field label="DNI / CI / ID" required><input name="dni" type="text" placeholder="12345678" className={inputCls} /></Field>
             <Field label="Teléfono"><input name="telefonoRep" type="tel" placeholder="+51 987 000 000" className={inputCls} /></Field>
-            <Field label="Copia DNI / CI / ID">
-              <input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} onChange={(e) => setCopiaDni(e.target.files?.[0] ?? null)} />
-            </Field>
+            <FileInput label="Copia DNI / CI / ID" onChange={setCopiaDni} />
           </div>
         </Section>
 
@@ -209,7 +279,6 @@ export default function NuevoProveedorPage() {
 }
 
 const inputCls = "w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition";
-const fileCls = "w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 file:text-xs hover:file:bg-blue-100 transition cursor-pointer";
 
 function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
   return (

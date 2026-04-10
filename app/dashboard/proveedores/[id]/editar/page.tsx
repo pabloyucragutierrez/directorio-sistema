@@ -17,12 +17,17 @@ const PAISES_CIUDADES: Record<string, string[]> = {
 const PAISES = Object.keys(PAISES_CIUDADES).sort();
 
 const RUBROS: Record<string, string[]> = {
-  "Agropecuario": ["Semillas y fertilizantes", "Maquinaria agrícola", "Ganadería"],
-  "Alimentos y Bebidas": ["Abarrotes", "Bebidas alcohólicas", "Bebidas no alcohólicas", "Lácteos", "Carnes y embutidos"],
-  "Tecnología": ["Hardware", "Software", "Electrónica de consumo", "Telecomunicaciones"],
-  "Textil y Confección": ["Ropa casual", "Ropa deportiva", "Calzado", "Accesorios de moda"],
-  "Construcción": ["Materiales de construcción", "Herramientas", "Electricidad e iluminación"],
-  "Salud y Farmacia": ["Medicamentos", "Dispositivos médicos", "Suplementos nutricionales"],
+  "Agropecuario": ["Semillas y fertilizantes", "Maquinaria agrícola", "Ganadería", "Acuicultura", "Productos veterinarios"],
+  "Alimentos y Bebidas": ["Abarrotes", "Bebidas alcohólicas", "Bebidas no alcohólicas", "Panadería y repostería", "Lácteos", "Carnes y embutidos", "Frutas y verduras", "Snacks y confitería"],
+  "Automotriz": ["Vehículos", "Repuestos y accesorios", "Lubricantes", "Llantas", "Equipos de taller"],
+  "Construcción": ["Materiales de construcción", "Acabados y pisos", "Sanitarios y griferías", "Pinturas y adhesivos", "Herramientas", "Electricidad e iluminación"],
+  "Educación": ["Libros y útiles", "Mobiliario escolar", "Plataformas educativas", "Uniformes", "Equipos de laboratorio"],
+  "Hogar y Decoración": ["Muebles", "Electrodomésticos", "Iluminación decorativa", "Textiles para el hogar", "Artículos de cocina"],
+  "Logística y Transporte": ["Carga terrestre", "Carga aérea", "Carga marítima", "Almacenaje", "Courier y mensajería"],
+  "Salud y Farmacia": ["Medicamentos", "Dispositivos médicos", "Productos de higiene", "Suplementos nutricionales", "Equipos hospitalarios"],
+  "Servicios Profesionales": ["Consultoría", "Legal y notarial", "Contabilidad y finanzas", "Marketing y publicidad", "Diseño y creatividad"],
+  "Tecnología": ["Hardware", "Software", "Electrónica de consumo", "Telecomunicaciones", "Cómputo y accesorios", "Seguridad electrónica"],
+  "Textil y Confección": ["Ropa casual", "Ropa deportiva", "Ropa interior", "Calzado", "Accesorios de moda", "Telas e insumos"],
   "Otro": ["Otro"],
 };
 const RUBROS_LIST = Object.keys(RUBROS);
@@ -49,6 +54,92 @@ interface FormState {
   representante: string; dni: string; telefonoRep: string; activo: boolean;
 }
 
+function FileField({ label, name, currentUrl, onChange }: {
+  label: string;
+  name: string;
+  currentUrl?: string;
+  onChange: (f: File | null) => void;
+}) {
+  const isCurrentImage = currentUrl && !currentUrl.toLowerCase().includes('.pdf') && !currentUrl.includes('/raw/');
+  const [preview, setPreview] = useState<string | null>(isCurrentImage ? currentUrl ?? null : null);
+  const [fileName, setFileName] = useState<string | null>(
+    currentUrl && !isCurrentImage ? "Archivo actual" : null
+  );
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleFile = (file: File | null) => {
+    onChange(file);
+    if (file) {
+      setFileName(file.name);
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (ev) => setPreview(ev.target?.result as string);
+        reader.readAsDataURL(file);
+      } else {
+        setPreview(null);
+      }
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFile(e.dataTransfer.files?.[0] ?? null);
+  };
+
+  const inputId = `file-${name}`;
+
+  return (
+    <div>
+      <label className="block text-xs font-medium text-slate-600 mb-1.5">{label}</label>
+      <label
+        htmlFor={inputId}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={handleDrop}
+        className={`relative flex flex-col items-center justify-center w-full h-36 rounded-xl border-2 border-dashed cursor-pointer transition overflow-hidden
+          ${isDragging ? "border-blue-400 bg-blue-50" : preview ? "border-slate-200 bg-slate-50" : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/40"}`}
+      >
+        {preview ? (
+          <>
+            <img src={preview} alt="preview" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition">
+              <i className="fa-solid fa-arrow-up-from-bracket text-white text-xl mb-1" />
+              <span className="text-white text-xs font-medium">Cambiar imagen</span>
+            </div>
+          </>
+        ) : fileName ? (
+          <div className="flex flex-col items-center gap-2 px-4 text-center">
+            <i className="fa-solid fa-file-pdf text-red-400 text-3xl" />
+            <span className="text-xs text-slate-500 break-all line-clamp-2">{fileName}</span>
+            <span className="text-xs text-blue-500">Clic para cambiar</span>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2 px-4 text-center">
+            <i className="fa-solid fa-cloud-arrow-up text-slate-300 text-3xl" />
+            <span className="text-xs text-slate-400">Arrastra o haz clic para subir</span>
+            <span className="text-[10px] text-slate-300">JPG, PNG o PDF</span>
+          </div>
+        )}
+      </label>
+      <input
+        id={inputId}
+        type="file"
+        name={name}
+        accept=".pdf,.jpg,.jpeg,.png"
+        className="hidden"
+        onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+      />
+      {currentUrl && !preview && fileName === "Archivo actual" && (
+        <a href={currentUrl} target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 mt-1.5 text-xs text-blue-500 hover:text-blue-700 transition">
+          <i className="fa-solid fa-arrow-up-right-from-square text-[10px]" />Ver archivo actual
+        </a>
+      )}
+    </div>
+  );
+}
+
 export default function EditarProveedorPage() {
   const router = useRouter();
   const params = useParams();
@@ -56,41 +147,34 @@ export default function EditarProveedorPage() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
+  const [copiaRucUrl, setCopiaRucUrl] = useState<string | undefined>();
+  const [copiaLicenciaUrl, setCopiaLicenciaUrl] = useState<string | undefined>();
+  const [copiaDniUrl, setCopiaDniUrl] = useState<string | undefined>();
+  const [copiaRuc, setCopiaRuc] = useState<File | null>(null);
+  const [copiaLicencia, setCopiaLicencia] = useState<File | null>(null);
+  const [copiaDni, setCopiaDni] = useState<File | null>(null);
   const [form, setForm] = useState<FormState>({
     razonSocial: "", pais: "", ciudad: "", direccion: "", distrito: "",
     codigoPostal: "", referencia: "", rubro: "", subrubro: "", entrega: "",
     email: "", ruc: "", licencia: "", telefono: "", whatsapp: "",
     formaPago: "", datosPago: "", representante: "", dni: "", telefonoRep: "", activo: true,
   });
-  const [copiaRuc, setCopiaRuc] = useState<File | null>(null);
-  const [copiaLicencia, setCopiaLicencia] = useState<File | null>(null);
-  const [copiaDni, setCopiaDni] = useState<File | null>(null);
 
   useEffect(() => {
     api.getProveedor(id).then((data) => {
       setForm({
-        razonSocial: data.razonSocial ?? "",
-        pais: data.pais ?? "",
-        ciudad: data.ciudad ?? "",
-        direccion: data.direccion ?? "",
-        distrito: data.distrito ?? "",
-        codigoPostal: data.codigoPostal ?? "",
-        referencia: data.referencia ?? "",
-        rubro: data.rubro ?? "",
-        subrubro: data.subrubro ?? "",
-        entrega: data.entrega ? "si" : "no",
-        email: data.email ?? "",
-        ruc: data.ruc ?? "",
-        licencia: data.licencia ?? "",
-        telefono: data.telefono ?? "",
-        whatsapp: data.whatsapp ?? "",
-        formaPago: data.formaPago ?? "",
-        datosPago: data.datosPago ?? "",
-        representante: data.representante ?? "",
-        dni: data.dni ?? "",
-        telefonoRep: data.telefonoRep ?? "",
-        activo: data.activo,
+        razonSocial: data.razonSocial ?? "", pais: data.pais ?? "", ciudad: data.ciudad ?? "",
+        direccion: data.direccion ?? "", distrito: data.distrito ?? "", codigoPostal: data.codigoPostal ?? "",
+        referencia: data.referencia ?? "", rubro: data.rubro ?? "", subrubro: data.subrubro ?? "",
+        entrega: data.entrega ? "si" : "no", email: data.email ?? "", ruc: data.ruc ?? "",
+        licencia: data.licencia ?? "", telefono: data.telefono ?? "", whatsapp: data.whatsapp ?? "",
+        formaPago: data.formaPago ?? "", datosPago: data.datosPago ?? "",
+        representante: data.representante ?? "", dni: data.dni ?? "",
+        telefonoRep: data.telefonoRep ?? "", activo: data.activo,
       });
+      setCopiaRucUrl(data.copiaRucUrl);
+      setCopiaLicenciaUrl(data.copiaLicenciaUrl);
+      setCopiaDniUrl(data.copiaDniUrl);
     }).catch(() => setError("Error al cargar el proveedor"))
       .finally(() => setFetching(false));
   }, [id]);
@@ -104,10 +188,26 @@ export default function EditarProveedorPage() {
     setError("");
     try {
       const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => {
-        if (key === "entrega") formData.append(key, value === "si" ? "true" : "false");
-        else formData.append(key, String(value));
-      });
+      formData.append("razonSocial", form.razonSocial);
+      formData.append("pais", form.pais);
+      formData.append("ciudad", form.ciudad);
+      formData.append("direccion", form.direccion);
+      formData.append("distrito", form.distrito);
+      formData.append("codigoPostal", form.codigoPostal);
+      formData.append("referencia", form.referencia);
+      formData.append("rubro", form.rubro);
+      formData.append("subrubro", form.subrubro);
+      formData.append("entrega", form.entrega === "si" ? "true" : "false");
+      formData.append("email", form.email);
+      formData.append("ruc", form.ruc);
+      formData.append("licencia", form.licencia);
+      formData.append("telefono", form.telefono);
+      formData.append("whatsapp", form.whatsapp);
+      formData.append("formaPago", form.formaPago);
+      formData.append("datosPago", form.datosPago);
+      formData.append("representante", form.representante);
+      formData.append("dni", form.dni);
+      formData.append("telefonoRep", form.telefonoRep);
       if (copiaRuc) formData.append("copiaRuc", copiaRuc);
       if (copiaLicencia) formData.append("copiaLicencia", copiaLicencia);
       if (copiaDni) formData.append("copiaDni", copiaDni);
@@ -182,11 +282,6 @@ export default function EditarProveedorPage() {
               </select>
             </Field>
             <Field label="Email" required><input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls} /></Field>
-            <Field label="Estado">
-              <select value={form.activo ? "activo" : "inactivo"} onChange={(e) => set("activo", e.target.value === "activo")} className={inputCls}>
-                <option value="activo">Activo</option><option value="inactivo">Inactivo</option>
-              </select>
-            </Field>
           </div>
         </Section>
 
@@ -194,8 +289,8 @@ export default function EditarProveedorPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="RUC / NIT / RUT" required><input type="text" value={form.ruc} onChange={(e) => set("ruc", e.target.value)} className={inputCls} /></Field>
             <Field label="Licencia Nro."><input type="text" value={form.licencia} onChange={(e) => set("licencia", e.target.value)} className={inputCls} /></Field>
-            <Field label="Copia RUC / NIT / RUT"><input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} onChange={(e) => setCopiaRuc(e.target.files?.[0] ?? null)} /></Field>
-            <Field label="Copia Licencia"><input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} onChange={(e) => setCopiaLicencia(e.target.files?.[0] ?? null)} /></Field>
+            <FileField label="Copia RUC / NIT / RUT" name="copiaRuc" currentUrl={copiaRucUrl} onChange={setCopiaRuc} />
+            <FileField label="Copia Licencia" name="copiaLicencia" currentUrl={copiaLicenciaUrl} onChange={setCopiaLicencia} />
             <Field label="Forma de pago">
               <select value={form.formaPago} onChange={(e) => set("formaPago", e.target.value)} className={inputCls}>
                 {FORMAS_PAGO.map((fp) => <option key={fp.value} value={fp.value}>{fp.label}</option>)}
@@ -219,7 +314,7 @@ export default function EditarProveedorPage() {
             <Field label="Nombre completo" required><input type="text" value={form.representante} onChange={(e) => set("representante", e.target.value)} className={inputCls} /></Field>
             <Field label="DNI / CI / ID" required><input type="text" value={form.dni} onChange={(e) => set("dni", e.target.value)} className={inputCls} /></Field>
             <Field label="Teléfono"><input type="tel" value={form.telefonoRep} onChange={(e) => set("telefonoRep", e.target.value)} className={inputCls} /></Field>
-            <Field label="Copia DNI / CI / ID"><input type="file" accept=".pdf,.jpg,.jpeg,.png" className={fileCls} onChange={(e) => setCopiaDni(e.target.files?.[0] ?? null)} /></Field>
+            <FileField label="Copia DNI / CI / ID" name="copiaDni" currentUrl={copiaDniUrl} onChange={setCopiaDni} />
           </div>
         </Section>
 
@@ -235,7 +330,6 @@ export default function EditarProveedorPage() {
 }
 
 const inputCls = "w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition";
-const fileCls = "w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 file:text-xs hover:file:bg-blue-100 transition cursor-pointer";
 
 function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
   return (

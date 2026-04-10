@@ -2,25 +2,27 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { api, setToken } from "@/lib/api";
+import { api, setToken, setCurrentUser } from "@/lib/api";
 
 export default function LoginPage() {
-  const router = useRouter(); 
-  const [email, setEmail] = useState(""); 
+  const router = useRouter();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setLoading(true);
-    setError("");
+    setError(false);
     try {
       const data = await api.login(email, password);
       setToken(data.access_token);
+      setCurrentUser(data.user);
       router.push("/dashboard/proveedores");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al iniciar sesión");
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -70,8 +72,9 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-              <i className="fa-solid fa-circle-exclamation mr-2" />{error}
+            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 flex items-center gap-2">
+              <i className="fa-solid fa-circle-exclamation flex-shrink-0" />
+              <span>Correo o contraseña incorrectos. Vuelve a intentarlo.</span>
             </div>
           )}
 

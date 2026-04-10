@@ -13,6 +13,21 @@ export function removeToken() {
   localStorage.removeItem('token');
 }
 
+export function setCurrentUser(user: { id: number; nombre: string; email: string }) {
+  localStorage.setItem('currentUser', JSON.stringify(user));
+}
+
+export function getCurrentUser(): { id: number; nombre: string; email: string } | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem('currentUser');
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
+
+export function removeCurrentUser() {
+  localStorage.removeItem('currentUser');
+}
+
 async function request(path: string, options: RequestInit = {}) {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -25,6 +40,7 @@ async function request(path: string, options: RequestInit = {}) {
 
   if (res.status === 401) {
     removeToken();
+    removeCurrentUser();
     window.location.href = '/login';
     throw new Error('No autorizado');
   }
@@ -46,6 +62,7 @@ async function requestFormData(path: string, formData: FormData, method = 'POST'
 
   if (res.status === 401) {
     removeToken();
+    removeCurrentUser();
     window.location.href = '/login';
     throw new Error('No autorizado');
   }
@@ -63,6 +80,13 @@ export const api = {
   login: (email: string, password: string) =>
     request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
 
+  // Usuarios
+  getUsuarios: () => request('/users'),
+  getUsuario: (id: number) => request(`/users/${id}`),
+  createUsuario: (data: unknown) => request('/users', { method: 'POST', body: JSON.stringify(data) }),
+  updateUsuario: (id: number, data: unknown) => request(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteUsuario: (id: number) => request(`/users/${id}`, { method: 'DELETE' }),
+
   // Proveedores
   getProveedores: (search?: string) =>
     request(`/proveedores${search ? `?search=${encodeURIComponent(search)}` : ''}`),
@@ -71,6 +95,16 @@ export const api = {
   updateProveedor: (id: number, formData: FormData) => requestFormData(`/proveedores/${id}`, formData, 'PATCH'),
   deleteProveedor: (id: number) => request(`/proveedores/${id}`, { method: 'DELETE' }),
   getStats: () => request('/proveedores/stats'),
+
+  // Productos del proveedor
+  getProductosProveedor: (proveedorId: number) =>
+    request(`/proveedores/${proveedorId}/productos`),
+  createProducto: (proveedorId: number, formData: FormData) =>
+    requestFormData(`/proveedores/${proveedorId}/productos`, formData, 'POST'),
+  updateProducto: (proveedorId: number, productoId: number, formData: FormData) =>
+    requestFormData(`/proveedores/${proveedorId}/productos/${productoId}`, formData, 'PATCH'),
+  deleteProducto: (proveedorId: number, productoId: number) =>
+    request(`/proveedores/${proveedorId}/productos/${productoId}`, { method: 'DELETE' }),
 
   // Pedidos
   getPedidos: (search?: string) =>
