@@ -204,7 +204,7 @@ export default function PedidoDetallePage() {
 
         <div className="flex justify-end pt-2">
           <button onClick={handleSave} disabled={saving}
-            className={`text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2 disabled:opacity-60 ${saved ? "bg-emerald-600" : "bg-blue-700 hover:bg-blue-600"}`}>
+            className={`text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2 disabled:opacity-60 ${saved ? "bg-emerald-600" : "bg-[#002060] hover:bg-[#002060]"}`}>
             {saving ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</> : saved ? <><i className="fa-solid fa-circle-check" /> Guardado</> : <><i className="fa-solid fa-floppy-disk" /> Guardar cambios</>}
           </button>
         </div>

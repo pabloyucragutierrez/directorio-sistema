@@ -67,7 +67,7 @@ export default function PedidosPage() {
           <p className="text-sm text-slate-500 mt-0.5">Control de pedidos a proveedores</p>
         </div>
         <Link href="/dashboard/pedidos/nuevo"
-          className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition whitespace-nowrap">
+          className="flex items-center gap-1.5 bg-[#002060] hover:bg-[#002060] text-white text-sm font-medium px-3.5 py-2 rounded-lg transition whitespace-nowrap">
           <i className="fa-solid fa-plus" />
           <span className="hidden sm:inline">Nuevo pedido</span>
           <span className="sm:hidden">Nuevo</span>

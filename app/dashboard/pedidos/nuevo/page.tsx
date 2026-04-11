@@ -185,7 +185,7 @@ export default function NuevoPedidoPage() {
                         <p className="text-xs text-blue-700 font-semibold">S/ {Number(p.precio).toFixed(2)}</p>
                       </div>
                       {enPedido && (
-                        <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                        <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-[#002060] rounded-full flex items-center justify-center">
                           <span className="text-white text-[10px] font-bold">{enPedido.cantidad}</span>
                         </div>
                       )}
@@ -258,7 +258,7 @@ export default function NuevoPedidoPage() {
         <div className="flex items-center justify-end gap-3 pt-2">
           <Link href="/dashboard/pedidos" className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition">Cancelar</Link>
           <button type="submit" disabled={loading}
-            className="bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+            className="bg-[#002060] hover:bg-[#002060] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
             {loading ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</> : <><i className="fa-solid fa-floppy-disk" /> Guardar pedido</>}
           </button>
         </div>

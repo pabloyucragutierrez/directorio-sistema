@@ -87,7 +87,7 @@ export default function UsuariosPage() {
           <p className="text-sm text-slate-500 mt-0.5">Gestiona los usuarios del sistema</p>
         </div>
         <button onClick={openCrear}
-          className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition whitespace-nowrap cursor-pointer">
+          className="flex items-center gap-1.5 bg-[#002060] hover:bg-[#002060] text-white text-sm font-medium px-3.5 py-2 rounded-lg transition whitespace-nowrap cursor-pointer">
           <i className="fa-solid fa-plus" />
           <span className="hidden sm:inline">Nuevo usuario</span>
           <span className="sm:hidden">Nuevo</span>
@@ -122,7 +122,7 @@ export default function UsuariosPage() {
                   <tr key={u.id} className="hover:bg-blue-50/50 transition">
                     <td className="px-4 py-3.5 font-medium text-slate-800 whitespace-nowrap">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-blue-700 flex items-center justify-center flex-shrink-0">
+                        <div className="w-7 h-7 rounded-full bg-[#002060] flex items-center justify-center flex-shrink-0">
                           <span className="text-xs font-semibold text-white">{u.nombre.charAt(0).toUpperCase()}</span>
                         </div>
                         {u.nombre}
@@ -202,7 +202,7 @@ export default function UsuariosPage() {
                 Cancelar
               </button>
               <button onClick={handleSave} disabled={saving}
-                className="bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+                className="bg-[#002060] hover:bg-[#002060] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
                 {saving ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</> : <><i className="fa-solid fa-floppy-disk" /> Guardar</>}
               </button>
             </div>

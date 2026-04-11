@@ -57,7 +57,7 @@ export default function ReportesPage() {
           <label className="block text-xs text-slate-500 mb-1"><i className="fa-regular fa-calendar mr-1" />Hasta</label>
           <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className={inputCls} />
         </div>
-        <button onClick={handleFiltrar} className="bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center justify-center gap-2">
+        <button onClick={handleFiltrar} className="bg-[#002060] hover:bg-[#002060] text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center justify-center gap-2">
           <i className="fa-solid fa-filter" />Filtrar
         </button>
       </div>
@@ -106,7 +106,7 @@ export default function ReportesPage() {
                     <td className="px-5 py-3.5 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-blue-600 rounded-full" style={{ width: `${tasa}%` }} />
+                          <div className="h-full bg-[#002060] rounded-full" style={{ width: `${tasa}%` }} />
                         </div>
                         <span className="text-slate-500 text-xs">{tasa}%</span>
                       </div>

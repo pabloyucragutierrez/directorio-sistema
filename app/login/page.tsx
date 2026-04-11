@@ -30,9 +30,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col lg:flex-row">
-      <div className="hidden lg:flex lg:w-1/2 bg-blue-700 flex-col items-center justify-center p-12 relative overflow-hidden">
-        <div className="absolute top-[-80px] left-[-80px] w-72 h-72 rounded-full bg-blue-600 opacity-50" />
-        <div className="absolute bottom-[-60px] right-[-60px] w-56 h-56 rounded-full bg-blue-800 opacity-60" />
+      <div className="hidden lg:flex lg:w-1/2 bg-[#002060] flex-col items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute top-[-80px] left-[-80px] w-72 h-72 rounded-full bg-[#002060] opacity-50" />
+        <div className="absolute bottom-[-60px] right-[-60px] w-56 h-56 rounded-full bg-[#002060] opacity-60" />
         <div className="absolute top-1/2 right-[-40px] w-32 h-32 rounded-full bg-red-500 opacity-30" />
         <div className="relative z-10 text-center">
           <div className="mb-6 flex justify-center">
@@ -60,7 +60,7 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-10">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex flex-col items-center mb-8 gap-3">
-            <div className="w-16 h-16 bg-blue-700 rounded-2xl flex items-center justify-center overflow-hidden">
+            <div className="w-16 h-16 bg-[#002060] rounded-2xl flex items-center justify-center overflow-hidden">
               <Image src="/logo-sistema.jpeg" alt="Logo" width={64} height={64} className="object-cover" />
             </div>
             <span className="text-base font-semibold text-slate-700">Directorio de Proveedores</span>
@@ -103,7 +103,7 @@ export default function LoginPage() {
             </div>
             <button
               type="submit" disabled={loading}
-              className="w-full bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white font-medium text-sm py-2.5 rounded-lg transition-all duration-150 mt-2 cursor-pointer flex items-center justify-center gap-2"
+              className="w-full bg-[#002060] hover:bg-[#002060] disabled:opacity-60 text-white font-medium text-sm py-2.5 rounded-lg transition-all duration-150 mt-2 cursor-pointer flex items-center justify-center gap-2"
             >
               {loading ? (
                 <><i className="fa-solid fa-spinner fa-spin" />Ingresando...</>

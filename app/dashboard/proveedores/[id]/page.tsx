@@ -198,7 +198,7 @@ function ProductoModal({
             Cancelar
           </button>
           <button onClick={handleSave} disabled={saving}
-            className="bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+            className="bg-[#002060] hover:bg-[#002060] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
             {saving ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</> : <><i className="fa-solid fa-floppy-disk" /> Guardar</>}
           </button>
         </div>
@@ -249,7 +249,7 @@ function ProductosTab({ proveedorId }: { proveedorId: number }) {
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-slate-500">{productos.length} producto{productos.length !== 1 ? "s" : ""} en el catálogo</p>
         <button onClick={openNuevo}
-          className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition cursor-pointer">
+          className="flex items-center gap-1.5 bg-[#002060] hover:bg-[#002060] text-white text-sm font-medium px-3.5 py-2 rounded-lg transition cursor-pointer">
           <i className="fa-solid fa-plus" /> Nuevo producto
         </button>
       </div>
@@ -469,7 +469,7 @@ export default function ProveedorDetallePage() {
 
           <div className="flex justify-end mt-6">
             <button onClick={() => router.push(`/dashboard/proveedores/${proveedor.id}/editar`)}
-              className="bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+              className="bg-[#002060] hover:bg-[#002060] text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
               <i className="fa-solid fa-pen-to-square" />Editar proveedor
             </button>
           </div>

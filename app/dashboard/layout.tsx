@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     : "U";
 
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
-    <aside className={`bg-blue-800 flex flex-col h-full ${mobile ? "w-64" : collapsed ? "w-16" : "w-56"} ${mobile ? "" : "flex-shrink-0 transition-all duration-300"}`}>
+    <aside className={`bg-[#002060] flex flex-col h-full ${mobile ? "w-64" : collapsed ? "w-16" : "w-56"} ${mobile ? "" : "flex-shrink-0 transition-all duration-300"}`}>
       <div className="px-3 py-4 border-b border-blue-700 flex items-center justify-between min-h-[60px]">
         {(!collapsed || mobile) && (
           <div className="flex items-center gap-2.5 overflow-hidden">
@@ -144,7 +144,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="md:hidden flex items-center justify-between px-4 py-3 bg-blue-800 border-b border-blue-700 flex-shrink-0">
+        <header className="md:hidden flex items-center justify-between px-4 py-3 bg-[#002060] border-b border-blue-700 flex-shrink-0">
           <button onClick={() => setMobileOpen(true)} className="text-blue-200 hover:text-white transition cursor-pointer p-1">
             <i className="fa-solid fa-bars text-lg" />
           </button>
