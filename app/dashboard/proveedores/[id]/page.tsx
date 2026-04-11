@@ -8,7 +8,8 @@ interface Producto {
   id: number;
   nombre: string;
   descripcion?: string;
-  precio: number;
+  precioNacional?: number;
+  precioDolar?: number;
   fotoUrl?: string;
 }
 
@@ -64,7 +65,8 @@ function ProductoModal({
 }) {
   const [nombre, setNombre] = useState(editando?.nombre ?? "");
   const [descripcion, setDescripcion] = useState(editando?.descripcion ?? "");
-  const [precio, setPrecio] = useState(editando?.precio?.toString() ?? "");
+  const [precioNacional, setPrecioNacional] = useState(editando?.precioNacional?.toString() ?? "");
+  const [precioDolar, setPrecioDolar] = useState(editando?.precioDolar?.toString() ?? "");
   const [foto, setFoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(editando?.fotoUrl ?? null);
   const [isDragging, setIsDragging] = useState(false);
@@ -81,14 +83,16 @@ function ProductoModal({
   };
 
   const handleSave = async () => {
-    if (!nombre || !precio) { setError("Nombre y precio son obligatorios"); return; }
+    if (!nombre) { setError("El nombre es obligatorio"); return; }
+    if (!precioNacional && !precioDolar) { setError("Ingresa al menos un precio"); return; }
     setSaving(true);
     setError("");
     try {
       const fd = new FormData();
       fd.append("nombre", nombre);
       if (descripcion.trim()) fd.append("descripcion", descripcion.trim());
-      fd.append("precio", precio);
+      if (precioNacional) fd.append("precioNacional", precioNacional);
+      if (precioDolar) fd.append("precioDolar", precioDolar);
       if (foto) fd.append("foto", foto);
       if (editando) {
         await api.updateProducto(proveedorId, editando.id, fd);
@@ -139,10 +143,25 @@ function ProductoModal({
               className={`${inputCls} resize-none`}
             />
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Precio <span className="text-red-500">*</span></label>
-            <input type="number" min={0} step={0.01} value={precio} onChange={(e) => setPrecio(e.target.value)}
-              placeholder="0.00" className={inputCls} />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                Precio nacional
+                <span className="text-slate-400 font-normal ml-1">(S/)</span>
+              </label>
+              <input type="number" min={0} step={0.01} value={precioNacional}
+                onChange={(e) => setPrecioNacional(e.target.value)}
+                placeholder="0.00" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                Precio dólar
+                <span className="text-slate-400 font-normal ml-1">($)</span>
+              </label>
+              <input type="number" min={0} step={0.01} value={precioDolar}
+                onChange={(e) => setPrecioDolar(e.target.value)}
+                placeholder="0.00" className={inputCls} />
+            </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Foto</label>
@@ -255,12 +274,26 @@ function ProductosTab({ proveedorId }: { proveedorId: number }) {
               )}
               <div className="p-3 flex flex-col gap-1 flex-1">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-slate-800 truncate">{p.nombre}</p>
                     {p.descripcion && (
                       <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{p.descripcion}</p>
                     )}
-                    <p className="text-sm text-blue-700 font-semibold mt-1">S/ {Number(p.precio).toFixed(2)}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {p.precioNacional != null && (
+                        <span className="text-xs font-semibold text-blue-700">
+                          S/ {Number(p.precioNacional).toFixed(2)}
+                        </span>
+                      )}
+                      {p.precioNacional != null && p.precioDolar != null && (
+                        <span className="text-slate-300 text-xs">·</span>
+                      )}
+                      {p.precioDolar != null && (
+                        <span className="text-xs font-semibold text-emerald-700">
+                          $ {Number(p.precioDolar).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
                     <button onClick={() => openEditar(p)}
