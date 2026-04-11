@@ -87,7 +87,7 @@ function ProductoModal({
     try {
       const fd = new FormData();
       fd.append("nombre", nombre);
-      fd.append("descripcion", descripcion);
+      if (descripcion.trim()) fd.append("descripcion", descripcion.trim());
       fd.append("precio", precio);
       if (foto) fd.append("foto", foto);
       if (editando) {
@@ -123,7 +123,7 @@ function ProductoModal({
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Nombre <span className="text-red-500">*</span></label>
             <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
