@@ -145,7 +145,7 @@ function ProductoModal({ proveedorId, editando, onClose, onSaved }: {
           </div>
         )}
 
-        <div className="space-y-4">
+        <div className="space-y-2">
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Nombre <span className="text-red-500">*</span></label>
             <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
