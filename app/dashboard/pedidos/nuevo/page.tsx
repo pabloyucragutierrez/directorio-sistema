@@ -7,14 +7,16 @@ import { api } from "@/lib/api";
 interface ProductoCatalogo {
   id: number;
   nombre: string;
-  precio: number;
+  precioNacional?: number;
+  precioDolar?: number;
+  moneda?: string;
   fotoUrl?: string;
 }
 
 interface LineaPedido {
   _key: number;
-  productoId?: number;      // si viene del catálogo
-  nombre: string;           // editable siempre
+  productoId?: number;
+  nombre: string;
   cantidad: number;
   precio: number;
   esCatalogo: boolean;
@@ -24,6 +26,10 @@ interface Proveedor {
   id: number;
   razonSocial: string;
 }
+
+const SIMBOLO: Record<string, string> = {
+  PEN: "S/", USD: "$", COP: "$", CLP: "$", ARS: "$", BOB: "Bs", BRL: "R$", MXN: "$", EUR: "€",
+};
 
 export default function NuevoPedidoPage() {
   const router = useRouter();
@@ -36,15 +42,12 @@ export default function NuevoPedidoPage() {
   const [numero, setNumero] = useState("");
   const [fecha, setFecha] = useState("");
   const [hora, setHora] = useState("");
-  const [lineas, setLineas] = useState<LineaPedido[]>([
-    { _key: 1, nombre: "", cantidad: 1, precio: 0, esCatalogo: false },
-  ]);
+  const [lineas, setLineas] = useState<LineaPedido[]>([]);
 
   useEffect(() => {
     api.getProveedores().then(setProveedores).catch(() => {});
   }, []);
 
-  // Cuando cambia el proveedor, cargamos su catálogo
   useEffect(() => {
     if (!proveedorId) { setCatalogo([]); return; }
     setLoadingCatalogo(true);
@@ -54,12 +57,8 @@ export default function NuevoPedidoPage() {
       .finally(() => setLoadingCatalogo(false));
   }, [proveedorId]);
 
-  // ── Helpers de líneas ────────────────────────────────────────────────────────
-  const addLineaManual = () =>
-    setLineas((l) => [...l, { _key: Date.now(), nombre: "", cantidad: 1, precio: 0, esCatalogo: false }]);
-
   const addLineaCatalogo = (producto: ProductoCatalogo) => {
-    // Si ya está en la lista, solo incrementamos cantidad
+    const precioDefault = producto.precioNacional ?? producto.precioDolar ?? 0;
     const existe = lineas.find((l) => l.productoId === producto.id);
     if (existe) {
       setLineas((l) => l.map((x) => x.productoId === producto.id ? { ...x, cantidad: x.cantidad + 1 } : x));
@@ -70,22 +69,19 @@ export default function NuevoPedidoPage() {
       productoId: producto.id,
       nombre: producto.nombre,
       cantidad: 1,
-      precio: Number(producto.precio),
+      precio: precioDefault,
       esCatalogo: true,
     }]);
   };
-
-  const removeLinea = (key: number) => setLineas((l) => l.filter((x) => x._key !== key));
 
   const updateLinea = (key: number, field: keyof LineaPedido, value: string | number | boolean) =>
     setLineas((l) => l.map((x) => x._key === key ? { ...x, [field]: value } : x));
 
   const total = lineas.reduce((acc, l) => acc + l.cantidad * l.precio, 0);
 
-  // ── Submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (lineas.length === 0) { setError("Agrega al menos un producto"); return; }
+    if (lineas.length === 0) { setError("Agrega al menos un producto desde el catálogo"); return; }
     setLoading(true);
     setError("");
     try {
@@ -125,7 +121,6 @@ export default function NuevoPedidoPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Información del pedido */}
         <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
             <i className="fa-solid fa-clipboard-list text-blue-400" />Información del pedido
@@ -154,7 +149,6 @@ export default function NuevoPedidoPage() {
           </div>
         </div>
 
-        {/* Catálogo del proveedor */}
         {proveedorId && (
           <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
             <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -164,11 +158,12 @@ export default function NuevoPedidoPage() {
             {loadingCatalogo ? (
               <div className="py-4 text-center text-slate-400 text-sm"><i className="fa-solid fa-spinner fa-spin mr-2" />Cargando catálogo...</div>
             ) : catalogo.length === 0 ? (
-              <p className="text-sm text-slate-400 py-2">Este proveedor no tiene productos en su catálogo. Puedes agregar productos manualmente abajo.</p>
+              <p className="text-sm text-slate-400 py-2">Este proveedor no tiene productos en su catálogo.</p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                 {catalogo.map((p) => {
                   const enPedido = lineas.find((l) => l.productoId === p.id);
+                  const sim = SIMBOLO[p.moneda ?? "PEN"] ?? p.moneda ?? "S/";
                   return (
                     <button key={p.id} type="button" onClick={() => addLineaCatalogo(p)}
                       className={`relative text-left rounded-xl border overflow-hidden transition cursor-pointer group
@@ -182,7 +177,20 @@ export default function NuevoPedidoPage() {
                       )}
                       <div className="p-2">
                         <p className="text-xs font-medium text-slate-800 truncate">{p.nombre}</p>
-                        <p className="text-xs text-blue-700 font-semibold">S/ {Number(p.precio).toFixed(2)}</p>
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {p.precioNacional != null && (
+                            <span className="text-xs text-blue-700 font-semibold">{sim} {Number(p.precioNacional).toFixed(2)}</span>
+                          )}
+                          {p.precioNacional != null && p.precioDolar != null && (
+                            <span className="text-slate-300 text-xs">·</span>
+                          )}
+                          {p.precioDolar != null && (
+                            <span className="text-xs text-emerald-700 font-semibold">$ {Number(p.precioDolar).toFixed(2)}</span>
+                          )}
+                          {p.precioNacional == null && p.precioDolar == null && (
+                            <span className="text-xs text-slate-400">Sin precio</span>
+                          )}
+                        </div>
                       </div>
                       {enPedido && (
                         <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-[#002060] rounded-full flex items-center justify-center">
@@ -197,63 +205,44 @@ export default function NuevoPedidoPage() {
           </div>
         )}
 
-        {/* Líneas del pedido */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+        {lineas.length > 0 && (
+          <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5">
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
               <i className="fa-solid fa-box text-blue-400" />Productos del pedido
             </h2>
-            <button type="button" onClick={addLineaManual}
-              className="text-xs text-blue-600 hover:text-blue-800 font-medium transition cursor-pointer flex items-center gap-1">
-              <i className="fa-solid fa-plus" />Agregar manual
-            </button>
-          </div>
-
-          {lineas.length === 0 ? (
-            <p className="text-sm text-slate-400 py-4 text-center">No hay productos. Agrega desde el catálogo o manualmente.</p>
-          ) : (
             <div className="space-y-2">
               <div className="hidden sm:grid grid-cols-12 gap-2 px-1">
-                <span className="col-span-5 text-xs text-slate-400">Producto</span>
+                <span className="col-span-6 text-xs text-slate-400">Producto</span>
                 <span className="col-span-3 text-xs text-slate-400">Cantidad</span>
                 <span className="col-span-3 text-xs text-slate-400">Precio unit.</span>
-                <span className="col-span-1" />
               </div>
               {lineas.map((l) => (
                 <div key={l._key} className="grid grid-cols-12 gap-2 items-center">
                   <input
-                    className={`col-span-11 sm:col-span-5 ${inputCls} ${l.esCatalogo ? "bg-blue-50/60" : ""}`}
+                    className={`col-span-12 sm:col-span-6 ${inputCls} bg-blue-50/60`}
                     placeholder="Producto"
                     value={l.nombre}
-                    onChange={(e) => updateLinea(l._key, "nombre", e.target.value)}
+                    readOnly
                   />
-                  <button type="button" onClick={() => removeLinea(l._key)}
-                    className="col-span-1 sm:hidden text-slate-300 hover:text-red-500 transition cursor-pointer flex justify-center">
-                    <i className="fa-solid fa-xmark" />
-                  </button>
                   <input type="number" min={1}
-                    className={`col-span-5 sm:col-span-3 ${inputCls}`}
+                    className={`col-span-6 sm:col-span-3 ${inputCls}`}
                     value={l.cantidad}
                     onChange={(e) => updateLinea(l._key, "cantidad", Number(e.target.value))} />
                   <input type="number" min={0} step={0.01}
                     className={`col-span-6 sm:col-span-3 ${inputCls}`}
                     value={l.precio}
                     onChange={(e) => updateLinea(l._key, "precio", Number(e.target.value))} />
-                  <button type="button" onClick={() => removeLinea(l._key)}
-                    className="hidden sm:flex col-span-1 text-slate-300 hover:text-red-500 transition cursor-pointer justify-center">
-                    <i className="fa-solid fa-xmark" />
-                  </button>
                 </div>
               ))}
             </div>
-          )}
 
-          <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
-            <div className="text-sm text-slate-500">
-              Importe total: <span className="text-slate-800 font-semibold ml-2">S/ {total.toFixed(2)}</span>
+            <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
+              <div className="text-sm text-slate-500">
+                Importe total: <span className="text-slate-800 font-semibold ml-2">S/ {total.toFixed(2)}</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="flex items-center justify-end gap-3 pt-2">
           <Link href="/dashboard/pedidos" className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition">Cancelar</Link>
