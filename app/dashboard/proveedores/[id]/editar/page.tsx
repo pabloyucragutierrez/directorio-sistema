@@ -52,19 +52,15 @@ interface FormState {
   subrubro: string; entrega: string; email: string; ruc: string; licencia: string;
   telefono: string; whatsapp: string; formaPago: string; datosPago: string;
   representante: string; dni: string; telefonoRep: string; activo: boolean;
+  usuarioAcceso: string; passwordAcceso: string;
 }
 
 function FileField({ label, name, currentUrl, onChange }: {
-  label: string;
-  name: string;
-  currentUrl?: string;
-  onChange: (f: File | null) => void;
+  label: string; name: string; currentUrl?: string; onChange: (f: File | null) => void;
 }) {
   const isCurrentImage = currentUrl && !currentUrl.toLowerCase().includes('.pdf') && !currentUrl.includes('/raw/');
   const [preview, setPreview] = useState<string | null>(isCurrentImage ? currentUrl ?? null : null);
-  const [fileName, setFileName] = useState<string | null>(
-    currentUrl && !isCurrentImage ? "Archivo actual" : null
-  );
+  const [fileName, setFileName] = useState<string | null>(currentUrl && !isCurrentImage ? "Archivo actual" : null);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleFile = (file: File | null) => {
@@ -81,12 +77,6 @@ function FileField({ label, name, currentUrl, onChange }: {
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    handleFile(e.dataTransfer.files?.[0] ?? null);
-  };
-
   const inputId = `file-${name}`;
 
   return (
@@ -96,7 +86,7 @@ function FileField({ label, name, currentUrl, onChange }: {
         htmlFor={inputId}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
-        onDrop={handleDrop}
+        onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFile(e.dataTransfer.files?.[0] ?? null); }}
         className={`relative flex flex-col items-center justify-center w-full h-36 rounded-xl border-2 border-dashed cursor-pointer transition overflow-hidden
           ${isDragging ? "border-blue-400 bg-blue-50" : preview ? "border-slate-200 bg-slate-50" : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/40"}`}
       >
@@ -122,14 +112,8 @@ function FileField({ label, name, currentUrl, onChange }: {
           </div>
         )}
       </label>
-      <input
-        id={inputId}
-        type="file"
-        name={name}
-        accept=".pdf,.jpg,.jpeg,.png"
-        className="hidden"
-        onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
-      />
+      <input id={inputId} type="file" name={name} accept=".pdf,.jpg,.jpeg,.png" className="hidden"
+        onChange={(e) => handleFile(e.target.files?.[0] ?? null)} />
       {currentUrl && !preview && fileName === "Archivo actual" && (
         <a href={currentUrl} target="_blank" rel="noopener noreferrer"
           className="inline-flex items-center gap-1 mt-1.5 text-xs text-blue-500 hover:text-blue-700 transition">
@@ -147,6 +131,7 @@ export default function EditarProveedorPage() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [copiaRucUrl, setCopiaRucUrl] = useState<string | undefined>();
   const [copiaLicenciaUrl, setCopiaLicenciaUrl] = useState<string | undefined>();
   const [copiaDniUrl, setCopiaDniUrl] = useState<string | undefined>();
@@ -157,20 +142,36 @@ export default function EditarProveedorPage() {
     razonSocial: "", pais: "", ciudad: "", direccion: "", distrito: "",
     codigoPostal: "", referencia: "", rubro: "", subrubro: "", entrega: "",
     email: "", ruc: "", licencia: "", telefono: "", whatsapp: "",
-    formaPago: "", datosPago: "", representante: "", dni: "", telefonoRep: "", activo: true,
+    formaPago: "", datosPago: "", representante: "", dni: "", telefonoRep: "",
+    activo: true, usuarioAcceso: "", passwordAcceso: "",
   });
 
   useEffect(() => {
     api.getProveedor(id).then((data) => {
       setForm({
-        razonSocial: data.razonSocial ?? "", pais: data.pais ?? "", ciudad: data.ciudad ?? "",
-        direccion: data.direccion ?? "", distrito: data.distrito ?? "", codigoPostal: data.codigoPostal ?? "",
-        referencia: data.referencia ?? "", rubro: data.rubro ?? "", subrubro: data.subrubro ?? "",
-        entrega: data.entrega ? "si" : "no", email: data.email ?? "", ruc: data.ruc ?? "",
-        licencia: data.licencia ?? "", telefono: data.telefono ?? "", whatsapp: data.whatsapp ?? "",
-        formaPago: data.formaPago ?? "", datosPago: data.datosPago ?? "",
-        representante: data.representante ?? "", dni: data.dni ?? "",
-        telefonoRep: data.telefonoRep ?? "", activo: data.activo,
+        razonSocial: data.razonSocial ?? "",
+        pais: data.pais ?? "",
+        ciudad: data.ciudad ?? "",
+        direccion: data.direccion ?? "",
+        distrito: data.distrito ?? "",
+        codigoPostal: data.codigoPostal ?? "",
+        referencia: data.referencia ?? "",
+        rubro: data.rubro ?? "",
+        subrubro: data.subrubro ?? "",
+        entrega: data.entrega === true ? "si" : data.entrega === false ? "no" : "",
+        email: data.email ?? "",
+        ruc: data.ruc ?? "",
+        licencia: data.licencia ?? "",
+        telefono: data.telefono ?? "",
+        whatsapp: data.whatsapp ?? "",
+        formaPago: data.formaPago ?? "",
+        datosPago: data.datosPago ?? "",
+        representante: data.representante ?? "",
+        dni: data.dni ?? "",
+        telefonoRep: data.telefonoRep ?? "",
+        activo: data.activo,
+        usuarioAcceso: data.usuarioAcceso ?? "",
+        passwordAcceso: "",
       });
       setCopiaRucUrl(data.copiaRucUrl);
       setCopiaLicenciaUrl(data.copiaLicenciaUrl);
@@ -191,23 +192,24 @@ export default function EditarProveedorPage() {
       formData.append("razonSocial", form.razonSocial);
       formData.append("pais", form.pais);
       formData.append("ciudad", form.ciudad);
-      formData.append("direccion", form.direccion);
-      formData.append("distrito", form.distrito);
-      formData.append("codigoPostal", form.codigoPostal);
-      formData.append("referencia", form.referencia);
-      formData.append("rubro", form.rubro);
-      formData.append("subrubro", form.subrubro);
-      formData.append("entrega", form.entrega === "si" ? "true" : "false");
-      formData.append("email", form.email);
-      formData.append("ruc", form.ruc);
-      formData.append("licencia", form.licencia);
-      formData.append("telefono", form.telefono);
-      formData.append("whatsapp", form.whatsapp);
-      formData.append("formaPago", form.formaPago);
-      formData.append("datosPago", form.datosPago);
-      formData.append("representante", form.representante);
-      formData.append("dni", form.dni);
-      formData.append("telefonoRep", form.telefonoRep);
+      if (form.direccion) formData.append("direccion", form.direccion);
+      if (form.distrito) formData.append("distrito", form.distrito);
+      if (form.codigoPostal) formData.append("codigoPostal", form.codigoPostal);
+      if (form.referencia) formData.append("referencia", form.referencia);
+      if (form.rubro) formData.append("rubro", form.rubro);
+      if (form.subrubro) formData.append("subrubro", form.subrubro);
+      if (form.entrega) formData.append("entrega", form.entrega === "si" ? "true" : "false");
+      if (form.email) formData.append("email", form.email);
+      if (form.ruc) formData.append("ruc", form.ruc);
+      if (form.licencia) formData.append("licencia", form.licencia);
+      if (form.telefono) formData.append("telefono", form.telefono);
+      if (form.whatsapp) formData.append("whatsapp", form.whatsapp);
+      if (form.formaPago) formData.append("formaPago", form.formaPago);
+      if (form.datosPago) formData.append("datosPago", form.datosPago);
+      if (form.representante) formData.append("representante", form.representante);
+      if (form.dni) formData.append("dni", form.dni);
+      if (form.telefonoRep) formData.append("telefonoRep", form.telefonoRep);
+      if (form.passwordAcceso) formData.append("passwordAcceso", form.passwordAcceso);
       if (copiaRuc) formData.append("copiaRuc", copiaRuc);
       if (copiaLicencia) formData.append("copiaLicencia", copiaLicencia);
       if (copiaDni) formData.append("copiaDni", copiaDni);
@@ -216,6 +218,7 @@ export default function EditarProveedorPage() {
       router.push(`/dashboard/proveedores/${id}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error al guardar cambios");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setLoading(false);
     }
@@ -224,7 +227,11 @@ export default function EditarProveedorPage() {
   const ciudades = form.pais ? (PAISES_CIUDADES[form.pais] ?? []) : [];
   const subrubros = form.rubro ? (RUBROS[form.rubro] ?? []) : [];
 
-  if (fetching) return <div className="p-6 text-center text-slate-400"><i className="fa-solid fa-spinner fa-spin text-2xl" /></div>;
+  if (fetching) return (
+    <div className="p-6 text-center text-slate-400">
+      <i className="fa-solid fa-spinner fa-spin text-2xl" />
+    </div>
+  );
 
   return (
     <div className="p-4 sm:p-6 mx-auto">
@@ -239,15 +246,17 @@ export default function EditarProveedorPage() {
       </div>
 
       {error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-          <i className="fa-solid fa-circle-exclamation mr-2" />{error}
+        <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 flex items-center gap-2">
+          <i className="fa-solid fa-circle-exclamation flex-shrink-0" />{error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <Section title="Datos generales" icon="fa-solid fa-building">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Razón social" required><input type="text" value={form.razonSocial} onChange={(e) => set("razonSocial", e.target.value)} className={inputCls} /></Field>
+            <Field label="Razón social" required>
+              <input type="text" value={form.razonSocial} onChange={(e) => set("razonSocial", e.target.value)} className={inputCls} />
+            </Field>
             <Field label="País" required>
               <select value={form.pais} onChange={(e) => { set("pais", e.target.value); set("ciudad", ""); }} className={inputCls}>
                 <option value="">Seleccionar país</option>
@@ -260,11 +269,19 @@ export default function EditarProveedorPage() {
                 {ciudades.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </Field>
-            <Field label="Dirección"><input type="text" value={form.direccion} onChange={(e) => set("direccion", e.target.value)} className={inputCls} /></Field>
-            <Field label="Distrito / Zona / Barrio"><input type="text" value={form.distrito} onChange={(e) => set("distrito", e.target.value)} className={inputCls} /></Field>
-            <Field label="Código postal"><input type="text" value={form.codigoPostal} onChange={(e) => set("codigoPostal", e.target.value)} className={inputCls} /></Field>
-            <Field label="Referencia" className="sm:col-span-2"><input type="text" value={form.referencia} onChange={(e) => set("referencia", e.target.value)} className={inputCls} /></Field>
-            <Field label="Rubro" required>
+            <Field label="Dirección">
+              <input type="text" value={form.direccion} onChange={(e) => set("direccion", e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="Distrito / Zona / Barrio">
+              <input type="text" value={form.distrito} onChange={(e) => set("distrito", e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="Código postal">
+              <input type="text" value={form.codigoPostal} onChange={(e) => set("codigoPostal", e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="Referencia" className="sm:col-span-2">
+              <input type="text" value={form.referencia} onChange={(e) => set("referencia", e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="Rubro">
               <select value={form.rubro} onChange={(e) => { set("rubro", e.target.value); set("subrubro", ""); }} className={inputCls}>
                 <option value="">Seleccionar rubro</option>
                 {RUBROS_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -276,19 +293,27 @@ export default function EditarProveedorPage() {
                 {subrubros.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>
-            <Field label="Entrega">
+            <Field label="Entrega (incluye delivery)">
               <select value={form.entrega} onChange={(e) => set("entrega", e.target.value)} className={inputCls}>
-                <option value="">Seleccionar</option><option value="si">Sí</option><option value="no">No</option>
+                <option value="">Seleccionar</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
               </select>
             </Field>
-            <Field label="Email" required><input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls} /></Field>
+            <Field label="Email">
+              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls} />
+            </Field>
           </div>
         </Section>
 
         <Section title="Datos fiscales" icon="fa-solid fa-file-invoice">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="RUC / NIT / RUT" required><input type="text" value={form.ruc} onChange={(e) => set("ruc", e.target.value)} className={inputCls} /></Field>
-            <Field label="Licencia Nro."><input type="text" value={form.licencia} onChange={(e) => set("licencia", e.target.value)} className={inputCls} /></Field>
+            <Field label="RUC / NIT / RUT">
+              <input type="text" value={form.ruc} onChange={(e) => set("ruc", e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="Licencia Nro.">
+              <input type="text" value={form.licencia} onChange={(e) => set("licencia", e.target.value)} className={inputCls} />
+            </Field>
             <FileField label="Copia RUC / NIT / RUT" name="copiaRuc" currentUrl={copiaRucUrl} onChange={setCopiaRuc} />
             <FileField label="Copia Licencia" name="copiaLicencia" currentUrl={copiaLicenciaUrl} onChange={setCopiaLicencia} />
             <Field label="Forma de pago">
@@ -304,24 +329,75 @@ export default function EditarProveedorPage() {
 
         <Section title="Contacto" icon="fa-solid fa-phone">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Teléfono"><input type="tel" value={form.telefono} onChange={(e) => set("telefono", e.target.value)} className={inputCls} /></Field>
-            <Field label="WhatsApp"><input type="tel" value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} className={inputCls} /></Field>
+            <Field label="Teléfono">
+              <input type="tel" value={form.telefono} onChange={(e) => set("telefono", e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="WhatsApp">
+              <input type="tel" value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} className={inputCls} />
+            </Field>
           </div>
         </Section>
 
         <Section title="Representante legal" icon="fa-solid fa-user-tie">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Nombre completo" required><input type="text" value={form.representante} onChange={(e) => set("representante", e.target.value)} className={inputCls} /></Field>
-            <Field label="DNI / CI / ID" required><input type="text" value={form.dni} onChange={(e) => set("dni", e.target.value)} className={inputCls} /></Field>
-            <Field label="Teléfono"><input type="tel" value={form.telefonoRep} onChange={(e) => set("telefonoRep", e.target.value)} className={inputCls} /></Field>
+            <Field label="Nombre completo">
+              <input type="text" value={form.representante} onChange={(e) => set("representante", e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="DNI / CI / ID">
+              <input type="text" value={form.dni} onChange={(e) => set("dni", e.target.value)} className={inputCls} />
+            </Field>
+            <Field label="Teléfono">
+              <input type="tel" value={form.telefonoRep} onChange={(e) => set("telefonoRep", e.target.value)} className={inputCls} />
+            </Field>
             <FileField label="Copia DNI / CI / ID" name="copiaDni" currentUrl={copiaDniUrl} onChange={setCopiaDni} />
           </div>
         </Section>
 
+        <Section title="Datos de acceso al portal" icon="fa-solid fa-key">
+          <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-2.5">
+            <i className="fa-solid fa-circle-info text-blue-400 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-blue-700 leading-relaxed">
+              El usuario de acceso no se puede cambiar. Si necesitas actualizar la contraseña,
+              escribe una nueva. Si lo dejas vacío, la contraseña actual se mantiene.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Usuario de acceso">
+              <div className="relative">
+                <i className="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                <input type="text" value={form.usuarioAcceso} disabled
+                  className={`${inputCls} pl-9 opacity-60 cursor-not-allowed bg-slate-50`} />
+              </div>
+            </Field>
+            <Field label="Nueva contraseña">
+              <div className="relative">
+                <i className="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+                <input
+                  type={mostrarPassword ? "text" : "password"}
+                  value={form.passwordAcceso}
+                  onChange={(e) => set("passwordAcceso", e.target.value)}
+                  placeholder="Dejar vacío para no cambiar"
+                  minLength={6}
+                  className={`${inputCls} pl-9 pr-10`}
+                />
+                <button type="button" onClick={() => setMostrarPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition cursor-pointer">
+                  <i className={`fa-solid ${mostrarPassword ? "fa-eye-slash" : "fa-eye"} text-sm`} />
+                </button>
+              </div>
+            </Field>
+          </div>
+        </Section>
+
         <div className="flex items-center justify-end gap-3 pt-2">
-          <Link href={`/dashboard/proveedores/${id}`} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition">Cancelar</Link>
-          <button type="submit" disabled={loading} className="bg-[#002060] hover:bg-[#002060] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
-            {loading ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</> : <><i className="fa-solid fa-floppy-disk" /> Guardar cambios</>}
+          <Link href={`/dashboard/proveedores/${id}`} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition">
+            Cancelar
+          </Link>
+          <button type="submit" disabled={loading}
+            className="bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+            {loading
+              ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</>
+              : <><i className="fa-solid fa-floppy-disk" /> Guardar cambios</>}
           </button>
         </div>
       </form>
@@ -342,7 +418,9 @@ function Section({ title, icon, children }: { title: string; icon: string; child
   );
 }
 
-function Field({ label, required, children, className }: { label: string; required?: boolean; children: React.ReactNode; className?: string }) {
+function Field({ label, required, children, className }: {
+  label: string; required?: boolean; children: React.ReactNode; className?: string;
+}) {
   return (
     <div className={className}>
       <label className="block text-xs font-medium text-slate-600 mb-1.5">

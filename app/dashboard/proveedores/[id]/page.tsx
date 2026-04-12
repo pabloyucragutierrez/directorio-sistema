@@ -4,24 +4,48 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { api } from "@/lib/api";
 
+const MONEDAS = [
+  { value: "PEN", label: "S/ — Sol peruano" },
+  { value: "USD", label: "$ — Dólar estadounidense" },
+  { value: "COP", label: "$ — Peso colombiano" },
+  { value: "CLP", label: "$ — Peso chileno" },
+  { value: "ARS", label: "$ — Peso argentino" },
+  { value: "BOB", label: "Bs — Boliviano" },
+  { value: "BRL", label: "R$ — Real brasileño" },
+  { value: "MXN", label: "$ — Peso mexicano" },
+  { value: "EUR", label: "€ — Euro" },
+];
+
+const SIMBOLO: Record<string, string> = {
+  PEN: "S/", USD: "$", COP: "$", CLP: "$", ARS: "$", BOB: "Bs", BRL: "R$", MXN: "$", EUR: "€",
+};
+
 interface Producto {
   id: number;
   nombre: string;
   descripcion?: string;
   precioNacional?: number;
   precioDolar?: number;
+  moneda?: string;
   fotoUrl?: string;
 }
 
 interface Proveedor {
   id: number; razonSocial: string; pais: string; ciudad: string;
   direccion?: string; distrito?: string; codigoPostal?: string; referencia?: string;
-  rubro: string; subrubro?: string; entrega: boolean; email: string; ruc: string;
+  rubro?: string; subrubro?: string; entrega?: string; email?: string; ruc?: string;
   licencia?: string; copiaRucUrl?: string; copiaLicenciaUrl?: string;
-  telefono?: string; whatsapp?: string; representante: string; dni: string;
-  telefonoRep?: string; copiaDniUrl?: string; formaPago?: string; datosPago?: string; activo: boolean;
+  telefono?: string; whatsapp?: string; representante?: string; dni?: string;
+  telefonoRep?: string; copiaDniUrl?: string; formaPago?: string; datosPago?: string;
+  activo: boolean; usuarioAcceso?: string;
   pedidos?: { calidad?: number; respuesta?: number; puntualidad?: number; confianza?: number; presentacion?: number }[];
 }
+
+const ENTREGA_LABEL: Record<string, string> = {
+  incluye_delivery: "✅ Incluye delivery a domicilio",
+  no_incluye_delivery: "❌ No incluye delivery a domicilio",
+  consultar: "💬 Consultar disponibilidad",
+};
 
 function FilePreview({ url, label }: { url?: string; label: string }) {
   if (!url) return <span className="text-sm text-slate-400">—</span>;
@@ -52,19 +76,12 @@ function calcCalificacionPromedio(pedidos?: Proveedor['pedidos']) {
   return Math.round((suma / conCal.length) * 10) / 10;
 }
 
-function ProductoModal({
-  proveedorId,
-  editando,
-  onClose,
-  onSaved,
-}: {
-  proveedorId: number;
-  editando: Producto | null;
-  onClose: () => void;
-  onSaved: () => void;
+function ProductoModal({ proveedorId, editando, onClose, onSaved }: {
+  proveedorId: number; editando: Producto | null; onClose: () => void; onSaved: () => void;
 }) {
   const [nombre, setNombre] = useState(editando?.nombre ?? "");
   const [descripcion, setDescripcion] = useState(editando?.descripcion ?? "");
+  const [moneda, setMoneda] = useState(editando?.moneda ?? "PEN");
   const [precioNacional, setPrecioNacional] = useState(editando?.precioNacional?.toString() ?? "");
   const [precioDolar, setPrecioDolar] = useState(editando?.precioDolar?.toString() ?? "");
   const [foto, setFoto] = useState<File | null>(null);
@@ -84,13 +101,13 @@ function ProductoModal({
 
   const handleSave = async () => {
     if (!nombre) { setError("El nombre es obligatorio"); return; }
-    if (!precioNacional && !precioDolar) { setError("Ingresa al menos un precio"); return; }
     setSaving(true);
     setError("");
     try {
       const fd = new FormData();
       fd.append("nombre", nombre);
       if (descripcion.trim()) fd.append("descripcion", descripcion.trim());
+      if (moneda) fd.append("moneda", moneda);
       if (precioNacional) fd.append("precioNacional", precioNacional);
       if (precioDolar) fd.append("precioDolar", precioDolar);
       if (foto) fd.append("foto", foto);
@@ -107,11 +124,12 @@ function ProductoModal({
     }
   };
 
+  const simbolo = SIMBOLO[moneda] ?? moneda;
   const inputId = "foto-producto-modal";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-semibold text-slate-800">
             {editando ? "Editar producto" : "Nuevo producto"}
@@ -127,27 +145,31 @@ function ProductoModal({
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Nombre <span className="text-red-500">*</span></label>
             <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
               placeholder="Nombre del producto" className={inputCls} />
           </div>
+
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Descripción</label>
-            <textarea
-              value={descripcion}
-              onChange={(e) => setDescripcion(e.target.value)}
-              placeholder="Descripción del producto..."
-              rows={2}
-              className={`${inputCls} resize-none`}
-            />
+            <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+              placeholder="Descripción del producto..." rows={2} className={`${inputCls} resize-none`} />
           </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Moneda</label>
+            <select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputCls}>
+              {MONEDAS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">
                 Precio nacional
-                <span className="text-slate-400 font-normal ml-1">(S/)</span>
+                <span className="text-slate-400 font-normal ml-1">({simbolo})</span>
               </label>
               <input type="number" min={0} step={0.01} value={precioNacional}
                 onChange={(e) => setPrecioNacional(e.target.value)}
@@ -163,6 +185,7 @@ function ProductoModal({
                 placeholder="0.00" className={inputCls} />
             </div>
           </div>
+
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Foto</label>
             <label
@@ -198,7 +221,7 @@ function ProductoModal({
             Cancelar
           </button>
           <button onClick={handleSave} disabled={saving}
-            className="bg-[#002060] hover:bg-[#002060] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+            className="bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
             {saving ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</> : <><i className="fa-solid fa-floppy-disk" /> Guardar</>}
           </button>
         </div>
@@ -219,11 +242,7 @@ function ProductosTab({ proveedorId }: { proveedorId: number }) {
       setLoading(true);
       const data = await api.getProductosProveedor(proveedorId);
       setProductos(data);
-    } catch {
-      // silencioso
-    } finally {
-      setLoading(false);
-    }
+    } catch { } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchProductos(); }, [proveedorId]);
@@ -234,22 +253,15 @@ function ProductosTab({ proveedorId }: { proveedorId: number }) {
     try {
       await api.deleteProducto(proveedorId, id);
       setProductos((p) => p.filter((x) => x.id !== id));
-    } catch {
-      // silencioso
-    } finally {
-      setDeletingId(null);
-    }
+    } catch { } finally { setDeletingId(null); }
   };
-
-  const openNuevo = () => { setEditando(null); setShowModal(true); };
-  const openEditar = (p: Producto) => { setEditando(p); setShowModal(true); };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-slate-500">{productos.length} producto{productos.length !== 1 ? "s" : ""} en el catálogo</p>
-        <button onClick={openNuevo}
-          className="flex items-center gap-1.5 bg-[#002060] hover:bg-[#002060] text-white text-sm font-medium px-3.5 py-2 rounded-lg transition cursor-pointer">
+        <button onClick={() => { setEditando(null); setShowModal(true); }}
+          className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition cursor-pointer">
           <i className="fa-solid fa-plus" /> Nuevo producto
         </button>
       </div>
@@ -263,52 +275,55 @@ function ProductosTab({ proveedorId }: { proveedorId: number }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {productos.map((p) => (
-            <div key={p.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
-              {p.fotoUrl ? (
-                <img src={p.fotoUrl} alt={p.nombre} className="w-full h-36 object-cover" />
-              ) : (
-                <div className="w-full h-36 bg-slate-100 flex items-center justify-center">
-                  <i className="fa-solid fa-image text-2xl text-slate-300" />
-                </div>
-              )}
-              <div className="p-3 flex flex-col gap-1 flex-1">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-800 truncate">{p.nombre}</p>
-                    {p.descripcion && (
-                      <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{p.descripcion}</p>
-                    )}
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      {p.precioNacional != null && (
-                        <span className="text-xs font-semibold text-blue-700">
-                          S/ {Number(p.precioNacional).toFixed(2)}
-                        </span>
-                      )}
-                      {p.precioNacional != null && p.precioDolar != null && (
-                        <span className="text-slate-300 text-xs">·</span>
-                      )}
-                      {p.precioDolar != null && (
-                        <span className="text-xs font-semibold text-emerald-700">
-                          $ {Number(p.precioDolar).toFixed(2)}
-                        </span>
-                      )}
-                    </div>
+          {productos.map((p) => {
+            const sim = SIMBOLO[p.moneda ?? "PEN"] ?? p.moneda ?? "S/";
+            return (
+              <div key={p.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
+                {p.fotoUrl ? (
+                  <img src={p.fotoUrl} alt={p.nombre} className="w-full h-36 object-cover" />
+                ) : (
+                  <div className="w-full h-36 bg-slate-100 flex items-center justify-center">
+                    <i className="fa-solid fa-image text-2xl text-slate-300" />
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
-                    <button onClick={() => openEditar(p)}
-                      className="text-slate-400 hover:text-blue-600 transition cursor-pointer">
-                      <i className="fa-solid fa-pen-to-square text-sm" />
-                    </button>
-                    <button onClick={() => handleDelete(p.id)} disabled={deletingId === p.id}
-                      className="text-slate-400 hover:text-red-500 transition cursor-pointer disabled:opacity-40">
-                      <i className="fa-solid fa-trash text-sm" />
-                    </button>
+                )}
+                <div className="p-3 flex flex-col gap-1 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-800 truncate">{p.nombre}</p>
+                      {p.descripcion && (
+                        <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{p.descripcion}</p>
+                      )}
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {p.precioNacional != null && (
+                          <span className="text-xs font-semibold text-blue-700">
+                            {sim} {Number(p.precioNacional).toFixed(2)}
+                          </span>
+                        )}
+                        {p.precioNacional != null && p.precioDolar != null && (
+                          <span className="text-slate-300 text-xs">·</span>
+                        )}
+                        {p.precioDolar != null && (
+                          <span className="text-xs font-semibold text-emerald-700">
+                            $ {Number(p.precioDolar).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
+                      <button onClick={() => { setEditando(p); setShowModal(true); }}
+                        className="text-slate-400 hover:text-blue-600 transition cursor-pointer">
+                        <i className="fa-solid fa-pen-to-square text-sm" />
+                      </button>
+                      <button onClick={() => handleDelete(p.id)} disabled={deletingId === p.id}
+                        className="text-slate-400 hover:text-red-500 transition cursor-pointer disabled:opacity-40">
+                        <i className="fa-solid fa-trash text-sm" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -416,7 +431,7 @@ export default function ProveedorDetallePage() {
             <Row label="Referencia" value={proveedor.referencia} />
             <Row label="Rubro" value={proveedor.rubro} />
             <Row label="Subrubro" value={proveedor.subrubro} />
-            <Row label="Entrega" value={proveedor.entrega ? "Sí" : "No"} />
+            <Row label="Delivery" value={proveedor.entrega ? ENTREGA_LABEL[proveedor.entrega] ?? proveedor.entrega : undefined} />
             <Row label="Email" value={proveedor.email} />
           </DetailSection>
 
@@ -450,6 +465,14 @@ export default function ProveedorDetallePage() {
             </div>
           </DetailSection>
 
+          <DetailSection title="Acceso al portal" icon="fa-solid fa-key">
+            <Row label="Usuario" value={proveedor.usuarioAcceso} />
+            <div className="flex flex-col sm:flex-row sm:items-center px-4 sm:px-5 py-3 gap-1 sm:gap-4">
+              <span className="text-xs sm:text-sm text-slate-400 sm:w-44 sm:flex-shrink-0">Contraseña</span>
+              <span className="text-sm text-slate-400 italic">Oculta por seguridad</span>
+            </div>
+          </DetailSection>
+
           {calificacion !== null && (
             <DetailSection title="Calificación promedio" icon="fa-solid fa-star">
               <div className="px-4 sm:px-5 py-4">
@@ -469,7 +492,7 @@ export default function ProveedorDetallePage() {
 
           <div className="flex justify-end mt-6">
             <button onClick={() => router.push(`/dashboard/proveedores/${proveedor.id}/editar`)}
-              className="bg-[#002060] hover:bg-[#002060] text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+              className="bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
               <i className="fa-solid fa-pen-to-square" />Editar proveedor
             </button>
           </div>
