@@ -292,13 +292,13 @@ export default function NuevoProveedorPage() {
         </Section>
 
         <Section title="Datos de acceso al portal" icon="fa-solid fa-key">
-          <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-2.5">
+          {/* <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-2.5">
             <i className="fa-solid fa-circle-info text-blue-400 mt-0.5 flex-shrink-0" />
             <p className="text-xs text-blue-700 leading-relaxed">
               Estas credenciales serán las que el proveedor usará para ingresar a su portal y ver sus pedidos.
               Compártelas con él una vez guardado el registro.
             </p>
-          </div>
+          </div> */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Usuario de acceso" required>
               <div className="relative">
@@ -331,7 +331,7 @@ export default function NuevoProveedorPage() {
             Cancelar
           </Link>
           <button type="submit" disabled={loading}
-            className="bg-blue-700 hover:bg-blue-600 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+            className="bg-[#002060] hover:bg-[#002060] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
             {loading
               ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</>
               : <><i className="fa-solid fa-floppy-disk" /> Guardar proveedor</>}
