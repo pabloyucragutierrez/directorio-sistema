@@ -1,34 +1,45 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
 
 const PAISES_CIUDADES: Record<string, string[]> = {
-  Perú: ["Lima", "Arequipa", "Trujillo", "Chiclayo", "Cusco", "Piura", "Iquitos", "Huancayo", "Tacna", "Puno"],
-  Colombia: ["Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena", "Cúcuta", "Bucaramanga", "Pereira", "Manizales"],
-  Chile: ["Santiago", "Valparaíso", "Concepción", "Antofagasta", "Temuco", "Rancagua", "Talca", "Iquique", "Arica"],
   Argentina: ["Buenos Aires", "Córdoba", "Rosario", "Mendoza", "La Plata", "Tucumán", "Mar del Plata", "Salta", "Santa Fe"],
-  Bolivia: ["La Paz", "Santa Cruz de la Sierra", "Cochabamba", "Oruro", "Potosí", "Sucre", "Tarija", "Trinidad"],
+  Bolivia: ["La Paz", "Santa Cruz", "Cochabamba", "Oruro", "Potosí", "Sucre", "Tarija", "Trinidad"],
   Brasil: ["São Paulo", "Río de Janeiro", "Brasília", "Salvador", "Fortaleza", "Belo Horizonte", "Manaus", "Curitiba"],
+  Chile: ["Santiago", "Valparaíso", "Concepción", "Antofagasta", "Temuco", "Rancagua", "Talca", "Iquique", "Arica"],
+  Colombia: ["Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena", "Cúcuta", "Bucaramanga", "Pereira", "Manizales"],
+  "Costa Rica": ["San José", "Alajuela", "Cartago", "Heredia", "Limón", "Puntarenas"],
   Ecuador: ["Quito", "Guayaquil", "Cuenca", "Machala", "Durán", "Manta", "Portoviejo", "Loja", "Ambato"],
-  México: ["Ciudad de México", "Guadalajara", "Monterrey", "Cancún", "Puebla", "Tijuana", "León", "Mérida"],
+  "El Salvador": ["San Salvador", "Santa Ana", "San Miguel", "Soyapango", "Santa Tecla"],
+  Guatemala: ["Ciudad de Guatemala", "Quetzaltenango", "Escuintla", "Huehuetenango", "Antigua Guatemala"],
+  Guyana: ["Georgetown", "Linden", "New Amsterdam", "Anna Regina"],
+  Honduras: ["Tegucigalpa", "San Pedro Sula", "La Ceiba", "Choluteca", "Comayagua"],
+  Nicaragua: ["Managua", "León", "Granada", "Masaya", "Chinandega", "Matagalpa"],
+  Panamá: ["Ciudad de Panamá", "San Miguelito", "David", "Colón", "Santiago"],
+  Paraguay: ["Asunción", "Ciudad del Este", "Encarnación", "San Lorenzo", "Luque"],
+  Perú: ["Lima", "Arequipa", "Trujillo", "Chiclayo", "Cusco", "Piura", "Iquitos", "Huancayo", "Tacna", "Puno"],
+  Surinam: ["Paramaribo", "Lelydorp", "Nieuw Nickerie", "Moengo"],
+  Uruguay: ["Montevideo", "Salto", "Paysandú", "Maldonado", "Rivera"],
+  Venezuela: ["Caracas", "Maracaibo", "Valencia", "Barquisimeto", "Maracay", "Ciudad Guayana"],
+  Belice: ["Belice City", "Belmopán", "San Ignacio", "Orange Walk", "Corozal"],
 };
 const PAISES = Object.keys(PAISES_CIUDADES).sort();
 
 const RUBROS: Record<string, string[]> = {
-  "Agropecuario": ["Semillas y fertilizantes", "Maquinaria agrícola", "Ganadería", "Acuicultura", "Productos veterinarios"],
-  "Alimentos y Bebidas": ["Abarrotes", "Bebidas alcohólicas", "Bebidas no alcohólicas", "Panadería y repostería", "Lácteos", "Carnes y embutidos", "Frutas y verduras", "Snacks y confitería"],
-  "Automotriz": ["Vehículos", "Repuestos y accesorios", "Lubricantes", "Llantas", "Equipos de taller"],
-  "Construcción": ["Materiales de construcción", "Acabados y pisos", "Sanitarios y griferías", "Pinturas y adhesivos", "Herramientas", "Electricidad e iluminación"],
-  "Educación": ["Libros y útiles", "Mobiliario escolar", "Plataformas educativas", "Uniformes", "Equipos de laboratorio"],
-  "Hogar y Decoración": ["Muebles", "Electrodomésticos", "Iluminación decorativa", "Textiles para el hogar", "Artículos de cocina"],
-  "Logística y Transporte": ["Carga terrestre", "Carga aérea", "Carga marítima", "Almacenaje", "Courier y mensajería"],
-  "Salud y Farmacia": ["Medicamentos", "Dispositivos médicos", "Productos de higiene", "Suplementos nutricionales", "Equipos hospitalarios"],
-  "Servicios Profesionales": ["Consultoría", "Legal y notarial", "Contabilidad y finanzas", "Marketing y publicidad", "Diseño y creatividad"],
-  "Tecnología": ["Hardware", "Software", "Electrónica de consumo", "Telecomunicaciones", "Cómputo y accesorios", "Seguridad electrónica"],
-  "Textil y Confección": ["Ropa casual", "Ropa deportiva", "Ropa interior", "Calzado", "Accesorios de moda", "Telas e insumos"],
-  "Otro": ["Otro"],
+  "ACCESORIOS DAMAS": ["Joyas", "Perfumes", "Carteras"],
+  "ACCESORIOS VARONES": ["Joyas", "Perfumes", "Otros"],
+  "BEBIDAS ALCOHÓLICAS": ["Toda bebida que contenga alcohol"],
+  "BEBIDAS EN GENERAL": ["Café", "Jugos", "Otros sin alcohol"],
+  "DESAYUNO": ["Desayunos especiales"],
+  "EVENTOS": ["Grupos musicales", "Arreglos", "Diversión"],
+  "FLORES": ["Flores para todo tipo de acontecimiento"],
+  "CUMPLEAÑOS/ANIVERSARIO": ["Regalos para cumpleaños", "Flores", "Tortas"],
+  "NAVIDEÑAS": ["Regalos exclusivos para Navidades"],
+  "PASTELERÍA / TORTAS": ["Tortas", "Pasteles", "Panes"],
+  "POSTRES": ["Postres en general"],
+  "PLATOS A LA CARTA": ["Variedad de comida"],
 };
 const RUBROS_LIST = Object.keys(RUBROS);
 
@@ -109,6 +120,9 @@ function FileInput({ label, onChange }: { label: string; onChange: (f: File | nu
   );
 }
 
+const getMultiSelectValues = (e: React.ChangeEvent<HTMLSelectElement>) =>
+  Array.from(e.target.selectedOptions).map((o) => o.value);
+
 export default function NuevoProveedorPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -123,7 +137,7 @@ export default function NuevoProveedorPage() {
   const [mostrarPassword, setMostrarPassword] = useState(false);
 
   const ciudades = pais ? (PAISES_CIUDADES[pais] ?? []) : [];
-  const subrubros = rubro ? (RUBROS[rubro] ?? []) : [];
+  const subrubroOptions = rubro ? (RUBROS[rubro] ?? []) : [];
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -197,13 +211,13 @@ export default function NuevoProveedorPage() {
             </Field>
             <Field label="País" required>
               <select value={pais} onChange={(e) => { setPais(e.target.value); setCiudad(""); }} required className={inputCls}>
-                <option value="">Seleccionar país</option>
+                <option value="">Seleccionar País</option>
                 {PAISES.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </Field>
             <Field label="Ciudad" required>
               <select value={ciudad} onChange={(e) => setCiudad(e.target.value)} disabled={!pais} required className={inputCls}>
-                <option value="">{pais ? "Seleccionar ciudad" : "Primero selecciona un país"}</option>
+                <option value="">{pais ? "Seleccionar ciudad" : "Primero selecciona un País"}</option>
                 {ciudades.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </Field>
@@ -220,15 +234,24 @@ export default function NuevoProveedorPage() {
               <input name="referencia" type="text" placeholder="Cerca al parque..." className={inputCls} />
             </Field>
             <Field label="Rubro">
-              <select value={rubro} onChange={(e) => { setRubro(e.target.value); setSubrubro(""); }} className={inputCls}>
+              <select
+                value={rubro}
+                onChange={(e) => { setRubro(e.target.value); setSubrubro(""); }}
+                className={inputCls}
+              >
                 <option value="">Seleccionar rubro</option>
                 {RUBROS_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
             </Field>
             <Field label="Subrubro">
-              <select value={subrubro} onChange={(e) => setSubrubro(e.target.value)} disabled={!rubro} className={inputCls}>
+              <select
+                value={subrubro}
+                onChange={(e) => setSubrubro(e.target.value)}
+                disabled={!rubro}
+                className={inputCls}
+              >
                 <option value="">{rubro ? "Seleccionar subrubro" : "Primero selecciona un rubro"}</option>
-                {subrubros.map((s) => <option key={s} value={s}>{s}</option>)}
+                {subrubroOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>
             <Field label="Entrega (incluye delivery)">
@@ -367,3 +390,7 @@ function Field({ label, required, children, className }: {
     </div>
   );
 }
+
+
+
+
