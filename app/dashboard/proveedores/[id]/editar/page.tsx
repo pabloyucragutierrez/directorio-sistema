@@ -17,6 +17,7 @@ const PAISES_CIUDADES: Record<string, string[]> = {
   Guyana: ["Georgetown", "Linden", "New Amsterdam", "Anna Regina"],
   Honduras: ["Tegucigalpa", "San Pedro Sula", "La Ceiba", "Choluteca", "Comayagua"],
   Nicaragua: ["Managua", "León", "Granada", "Masaya", "Chinandega", "Matagalpa"],
+  México: ["Ciudad de México", "Guadalajara", "Monterrey", "Puebla", "Tijuana", "León", "Querétaro", "Mérida", "Cancún"],
   Panamá: ["Ciudad de Panamá", "San Miguelito", "David", "Colón", "Santiago"],
   Paraguay: ["Asunción", "Ciudad del Este", "Encarnación", "San Lorenzo", "Luque"],
   Perú: ["Lima", "Arequipa", "Trujillo", "Chiclayo", "Cusco", "Piura", "Iquitos", "Huancayo", "Tacna", "Puno"],
@@ -63,7 +64,7 @@ interface FormState {
   subrubro: string; entrega: string; email: string; ruc: string; licencia: string;
   telefono: string; whatsapp: string; formaPago: string; datosPago: string;
   representante: string; dni: string; telefonoRep: string; activo: boolean;
-  usuarioAcceso: string; passwordAcceso: string;
+  comentarios: string;
 }
 
 function FileField({ label, name, currentUrl, onChange }: {
@@ -142,28 +143,28 @@ export default function EditarProveedorPage() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
-  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [copiaRucUrl, setCopiaRucUrl] = useState<string | undefined>();
   const [copiaLicenciaUrl, setCopiaLicenciaUrl] = useState<string | undefined>();
   const [copiaDniUrl, setCopiaDniUrl] = useState<string | undefined>();
   const [copiaRuc, setCopiaRuc] = useState<File | null>(null);
   const [copiaLicencia, setCopiaLicencia] = useState<File | null>(null);
   const [copiaDni, setCopiaDni] = useState<File | null>(null);
-  const [form, setForm] = useState<FormState>({
-    razonSocial: "", pais: "", ciudad: "", direccion: "", distrito: "",
-    codigoPostal: "", referencia: "", rubro: "", subrubro: "", entrega: "",
-    email: "", ruc: "", licencia: "", telefono: "", whatsapp: "",
-    formaPago: "", datosPago: "", representante: "", dni: "", telefonoRep: "",
-    activo: true, usuarioAcceso: "", passwordAcceso: "",
-  });
+	  const [form, setForm] = useState<FormState>({
+	    razonSocial: "", pais: "", ciudad: "", direccion: "", distrito: "",
+	    codigoPostal: "", referencia: "", rubro: "", subrubro: "", entrega: "",
+	    email: "", ruc: "", licencia: "", telefono: "", whatsapp: "",
+	    formaPago: "", datosPago: "", representante: "", dni: "", telefonoRep: "",
+	    activo: true,
+	    comentarios: "",
+	  });
 
   useEffect(() => {
     api.getProveedor(id).then((data) => {
-      setForm({
-        razonSocial: data.razonSocial ?? "",
-        pais: data.pais ?? "",
-        ciudad: data.ciudad ?? "",
-        direccion: data.direccion ?? "",
+	      setForm({
+	        razonSocial: data.razonSocial ?? "",
+	        pais: data.pais ?? "",
+	        ciudad: data.ciudad ?? "",
+	        direccion: data.direccion ?? "",
         distrito: data.distrito ?? "",
         codigoPostal: data.codigoPostal ?? "",
         referencia: data.referencia ?? "",
@@ -177,13 +178,12 @@ export default function EditarProveedorPage() {
         whatsapp: data.whatsapp ?? "",
         formaPago: data.formaPago ?? "",
         datosPago: data.datosPago ?? "",
-        representante: data.representante ?? "",
-        dni: data.dni ?? "",
-        telefonoRep: data.telefonoRep ?? "",
-        activo: data.activo,
-        usuarioAcceso: data.usuarioAcceso ?? "",
-        passwordAcceso: "",
-      });
+	        representante: data.representante ?? "",
+	        dni: data.dni ?? "",
+	        telefonoRep: data.telefonoRep ?? "",
+	        activo: data.activo,
+	        comentarios: data.comentarios ?? "",
+	      });
       setCopiaRucUrl(data.copiaRucUrl);
       setCopiaLicenciaUrl(data.copiaLicenciaUrl);
       setCopiaDniUrl(data.copiaDniUrl);
@@ -214,16 +214,16 @@ export default function EditarProveedorPage() {
       if (form.ruc) formData.append("ruc", form.ruc);
       if (form.licencia) formData.append("licencia", form.licencia);
       if (form.telefono) formData.append("telefono", form.telefono);
-      if (form.whatsapp) formData.append("whatsapp", form.whatsapp);
-      if (form.formaPago) formData.append("formaPago", form.formaPago);
-      if (form.datosPago) formData.append("datosPago", form.datosPago);
-      if (form.representante) formData.append("representante", form.representante);
-      if (form.dni) formData.append("dni", form.dni);
-      if (form.telefonoRep) formData.append("telefonoRep", form.telefonoRep);
-      if (form.passwordAcceso) formData.append("passwordAcceso", form.passwordAcceso);
-      if (copiaRuc) formData.append("copiaRuc", copiaRuc);
-      if (copiaLicencia) formData.append("copiaLicencia", copiaLicencia);
-      if (copiaDni) formData.append("copiaDni", copiaDni);
+	      if (form.whatsapp) formData.append("whatsapp", form.whatsapp);
+	      if (form.formaPago) formData.append("formaPago", form.formaPago);
+	      if (form.datosPago) formData.append("datosPago", form.datosPago);
+	      if (form.representante) formData.append("representante", form.representante);
+	      if (form.dni) formData.append("dni", form.dni);
+	      if (form.telefonoRep) formData.append("telefonoRep", form.telefonoRep);
+	      if (form.comentarios.trim()) formData.append("comentarios", form.comentarios.trim());
+	      if (copiaRuc) formData.append("copiaRuc", copiaRuc);
+	      if (copiaLicencia) formData.append("copiaLicencia", copiaLicencia);
+	      if (copiaDni) formData.append("copiaDni", copiaDni);
 
       await api.updateProveedor(id, formData);
       router.push(`/dashboard/proveedores/${id}`);
@@ -293,22 +293,13 @@ export default function EditarProveedorPage() {
               <input type="text" value={form.referencia} onChange={(e) => set("referencia", e.target.value)} className={inputCls} />
             </Field>
             <Field label="Rubro">
-              <select
-                value={form.rubro}
-                onChange={(e) => { set("rubro", e.target.value); set("subrubro", ""); }}
-                className={inputCls}
-              >
+              <select value={form.rubro} onChange={(e) => { set("rubro", e.target.value); set("subrubro", ""); }} className={inputCls}>
                 <option value="">Seleccionar rubro</option>
                 {RUBROS_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
             </Field>
             <Field label="Subrubro">
-              <select
-                value={form.subrubro}
-                onChange={(e) => set("subrubro", e.target.value)}
-                disabled={!form.rubro}
-                className={inputCls}
-              >
+              <select value={form.subrubro} onChange={(e) => set("subrubro", e.target.value)} disabled={!form.rubro} className={inputCls}>
                 <option value="">{form.rubro ? "Seleccionar subrubro" : "Primero selecciona un rubro"}</option>
                 {subrubroOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -358,63 +349,35 @@ export default function EditarProveedorPage() {
           </div>
         </Section>
 
-        <Section title="Representante legal" icon="fa-solid fa-user-tie">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Nombre completo">
-              <input type="text" value={form.representante} onChange={(e) => set("representante", e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="DNI / CI / ID">
-              <input type="text" value={form.dni} onChange={(e) => set("dni", e.target.value)} className={inputCls} />
-            </Field>
-            <Field label="Teléfono">
-              <input type="tel" value={form.telefonoRep} onChange={(e) => set("telefonoRep", e.target.value)} className={inputCls} />
-            </Field>
-            <FileField label="Copia DNI / CI / ID" name="copiaDni" currentUrl={copiaDniUrl} onChange={setCopiaDni} />
-          </div>
-        </Section>
+	        <Section title="Representante legal" icon="fa-solid fa-user-tie">
+	          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+	            <Field label="Nombre completo">
+	              <input type="text" value={form.representante} onChange={(e) => set("representante", e.target.value)} className={inputCls} />
+	            </Field>
+	            <Field label="DNI / CI / ID">
+	              <input type="text" value={form.dni} onChange={(e) => set("dni", e.target.value)} className={inputCls} />
+	            </Field>
+	            <Field label="Teléfono">
+	              <input type="tel" value={form.telefonoRep} onChange={(e) => set("telefonoRep", e.target.value)} className={inputCls} />
+	            </Field>
+	            <FileField label="Copia DNI / CI / ID" name="copiaDni" currentUrl={copiaDniUrl} onChange={setCopiaDni} />
+	          </div>
+	        </Section>
 
-        <Section title="Datos de acceso al portal" icon="fa-solid fa-key">
-          {/* <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-2.5">
-            <i className="fa-solid fa-circle-info text-blue-400 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-blue-700 leading-relaxed">
-              El usuario de acceso no se puede cambiar. Si necesitas actualizar la Contraseña,
-              escribe una nueva. Si lo dejas vacío, la Contraseña actual se mantiene.
-            </p>
-          </div> */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Usuario de acceso">
-              <div className="relative">
-                <i className="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
-                <input type="text" value={form.usuarioAcceso} disabled
-                  className={`${inputCls} pl-9 opacity-60 cursor-not-allowed bg-slate-50`} />
-              </div>
-            </Field>
-            <Field label="Nueva Contraseña">
-              <div className="relative">
-                <i className="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
-                <input
-                  type={mostrarPassword ? "text" : "password"}
-                  value={form.passwordAcceso}
-                  onChange={(e) => set("passwordAcceso", e.target.value)}
-                  placeholder="Dejar vacío para no cambiar"
-                  minLength={6}
-                  className={`${inputCls} pl-9 pr-10`}
-                />
-                <button type="button" onClick={() => setMostrarPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition cursor-pointer">
-                  <i className={`fa-solid ${mostrarPassword ? "fa-eye-slash" : "fa-eye"} text-sm`} />
-                </button>
-              </div>
-            </Field>
-          </div>
-        </Section>
+	        <Section title="Comentarios" icon="fa-solid fa-comment-dots">
+	          <div className="grid grid-cols-1 gap-4">
+	            <Field label="Comentarios">
+	              <textarea rows={3} value={form.comentarios} onChange={(e) => set("comentarios", e.target.value)} className={`${inputCls} resize-none`} />
+	            </Field>
+	          </div>
+	        </Section>
 
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Link href={`/dashboard/proveedores/${id}`} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition">
-            Cancelar
-          </Link>
+	        <div className="flex items-center justify-end gap-3 pt-2">
+	          <Link href={`/dashboard/proveedores/${id}`} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition">
+	            Cancelar
+	          </Link>
           <button type="submit" disabled={loading}
-            className="bg-[#002060] hover:bg-[#002060] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+            className="bg-[#002060] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
             {loading
               ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</>
               : <><i className="fa-solid fa-floppy-disk" /> Guardar cambios</>}
@@ -450,7 +413,3 @@ function Field({ label, required, children, className }: {
     </div>
   );
 }
-
-
-
-

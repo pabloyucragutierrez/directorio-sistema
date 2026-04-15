@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { api, getCurrentProveedor, getProveedorToken, removeProveedorToken, removeCurrentProveedor } from "@/lib/api";
+import { api, getCurrentProveedor, getToken, removeToken, removeCurrentProveedor, getRole, removeRole, removeCurrentUser } from "@/lib/api";
 
 interface ProductoPedido {
   id: number;
@@ -49,8 +49,10 @@ export default function ProveedorDashboardPage() {
   const [pedidoAbierto, setPedidoAbierto] = useState<number | null>(null);
 
   useEffect(() => {
-    const token = getProveedorToken();
-    if (!token) { router.push("/proveedor/login"); return; }
+    const token = getToken();
+    if (!token) { router.push("/login"); return; }
+    const role = getRole();
+    if (role === 'admin') { router.replace("/dashboard/proveedores"); return; }
     const p = getCurrentProveedor();
     setProveedor(p);
     fetchPedidos();
@@ -81,9 +83,11 @@ export default function ProveedorDashboardPage() {
   };
 
   const handleLogout = () => {
-    removeProveedorToken();
+    removeToken();
+    removeRole();
+    removeCurrentUser();
     removeCurrentProveedor();
-    router.push("/proveedor/login");
+    router.push("/login");
   };
 
   const pendientes = pedidos.filter((p) => p.estado === 'PENDIENTE');

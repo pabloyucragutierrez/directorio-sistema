@@ -38,6 +38,7 @@ export default function PedidosPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => fetchPedidos(search), 300);
@@ -58,6 +59,20 @@ export default function PedidosPage() {
 
   const calcImporte = (productos: { cantidad: number; precio: number }[]) =>
     productos.reduce((acc, p) => acc + p.cantidad * p.precio, 0);
+
+  const handleDelete = async (p: Pedido) => {
+    if (!confirm(`¿Estás seguro de eliminar el pedido "${p.numero}"? Esta acción no se puede deshacer.`)) return;
+    setDeletingId(p.id);
+    setError("");
+    try {
+      await api.deletePedido(p.id);
+      setPedidos((prev) => prev.filter((x) => x.id !== p.id));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al eliminar pedido");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6 max-w-full mx-auto">
@@ -118,9 +133,21 @@ export default function PedidosPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                      <Link href={`/dashboard/pedidos/${p.id}`} className="text-xs text-slate-400 hover:text-blue-600 transition font-medium inline-flex items-center gap-1">
-                        Ver <i className="fa-solid fa-arrow-right text-[10px]" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-3">
+                        <Link href={`/dashboard/pedidos/${p.id}`} className="text-xs text-slate-400 hover:text-blue-600 transition font-medium inline-flex items-center gap-1">
+                          Ver <i className="fa-solid fa-arrow-right text-[10px]" />
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(p)}
+                          disabled={deletingId === p.id}
+                          className="text-slate-400 hover:text-red-500 transition cursor-pointer disabled:opacity-40"
+                          title="Eliminar pedido"
+                        >
+                          {deletingId === p.id
+                            ? <i className="fa-solid fa-spinner fa-spin text-sm" />
+                            : <i className="fa-solid fa-trash text-sm" />}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

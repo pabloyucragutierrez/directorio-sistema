@@ -13,6 +13,20 @@ export function removeToken() {
   localStorage.removeItem('token');
 }
 
+export function setRole(role: 'admin' | 'proveedor') {
+  localStorage.setItem('role', role);
+}
+
+export function getRole(): 'admin' | 'proveedor' | null {
+  if (typeof window === 'undefined') return null;
+  const role = localStorage.getItem('role');
+  return role === 'admin' || role === 'proveedor' ? role : null;
+}
+
+export function removeRole() {
+  localStorage.removeItem('role');
+}
+
 export function setCurrentUser(user: { id: number; nombre: string; email: string }) {
   localStorage.setItem('currentUser', JSON.stringify(user));
 }
@@ -73,6 +87,7 @@ async function request(path: string, options: RequestInit = {}) {
 
   if (res.status === 401) {
     removeToken();
+    removeRole();
     removeCurrentUser();
     if (path !== '/auth/login') {
       window.location.href = '/login';
@@ -84,17 +99,31 @@ async function request(path: string, options: RequestInit = {}) {
     const text = await res.text();
     try {
       const error = JSON.parse(text);
-      throw new Error(error.message || 'Error en la solicitud');
+      const msg = Array.isArray(error?.message) ? error.message.join(', ') : error?.message;
+      throw new Error(msg || 'Error en la solicitud');
     } catch {
-      throw new Error('Error en la solicitud');
+      // A veces el backend puede responder texto plano/HTML; mostramos el contenido si existe.
+      const fallback = text?.trim();
+      // Si el backend devolvió un JSON como texto (y por alguna razón el parse falló),
+      // extraemos solo el campo "message" para no mostrar todo el objeto.
+      const match = fallback?.match(/"message"\s*:\s*"((?:\\.|[^"\\])*)"/);
+      if (match?.[1]) {
+        try {
+          throw new Error(JSON.parse(`"${match[1]}"`));
+        } catch {
+          throw new Error(match[1]);
+        }
+      }
+      throw new Error(fallback || 'Error en la solicitud');
     }
   }
 
+  if (res.status === 204) return null;
   return res.json();
 }
 
 async function requestProveedor(path: string, options: RequestInit = {}) {
-  const token = getProveedorToken();
+  const token = getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -109,9 +138,11 @@ async function requestProveedor(path: string, options: RequestInit = {}) {
   }
 
   if (res.status === 401) {
-    removeProveedorToken();
+    removeToken();
+    removeRole();
+    removeCurrentUser();
     removeCurrentProveedor();
-    window.location.href = '/proveedor/login';
+    window.location.href = '/login';
     throw new Error('No autorizado');
   }
 
@@ -119,9 +150,19 @@ async function requestProveedor(path: string, options: RequestInit = {}) {
     const text = await res.text();
     try {
       const error = JSON.parse(text);
-      throw new Error(error.message || 'Error en la solicitud');
+      const msg = Array.isArray(error?.message) ? error.message.join(', ') : error?.message;
+      throw new Error(msg || 'Error en la solicitud');
     } catch {
-      throw new Error('Error en la solicitud');
+      const fallback = text?.trim();
+      const match = fallback?.match(/"message"\s*:\s*"((?:\\.|[^"\\])*)"/);
+      if (match?.[1]) {
+        try {
+          throw new Error(JSON.parse(`"${match[1]}"`));
+        } catch {
+          throw new Error(match[1]);
+        }
+      }
+      throw new Error(fallback || 'Error en la solicitud');
     }
   }
 
@@ -142,6 +183,7 @@ async function requestFormData(path: string, formData: FormData, method = 'POST'
 
   if (res.status === 401) {
     removeToken();
+    removeRole();
     removeCurrentUser();
     window.location.href = '/login';
     throw new Error('No autorizado');
@@ -151,9 +193,19 @@ async function requestFormData(path: string, formData: FormData, method = 'POST'
     const text = await res.text();
     try {
       const error = JSON.parse(text);
-      throw new Error(error.message || 'Error en la solicitud');
+      const msg = Array.isArray(error?.message) ? error.message.join(', ') : error?.message;
+      throw new Error(msg || 'Error en la solicitud');
     } catch {
-      throw new Error('Error en la solicitud');
+      const fallback = text?.trim();
+      const match = fallback?.match(/"message"\s*:\s*"((?:\\.|[^"\\])*)"/);
+      if (match?.[1]) {
+        try {
+          throw new Error(JSON.parse(`"${match[1]}"`));
+        } catch {
+          throw new Error(match[1]);
+        }
+      }
+      throw new Error(fallback || 'Error en la solicitud');
     }
   }
 
@@ -164,8 +216,6 @@ export const api = {
   // Auth
   login: (email: string, password: string) =>
     request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  loginProveedor: (usuarioAcceso: string, passwordAcceso: string) =>
-    request('/auth/login-proveedor', { method: 'POST', body: JSON.stringify({ usuarioAcceso, passwordAcceso }) }),
 
   // Usuarios
   getUsuarios: () => request('/users'),
@@ -181,6 +231,7 @@ export const api = {
   createProveedor: (formData: FormData) => requestFormData('/proveedores', formData, 'POST'),
   updateProveedor: (id: number, formData: FormData) => requestFormData(`/proveedores/${id}`, formData, 'PATCH'),
   deleteProveedor: (id: number) => request(`/proveedores/${id}`, { method: 'DELETE' }),
+  deletePedidosProveedor: (id: number) => request(`/proveedores/${id}/pedidos`, { method: 'DELETE' }),
   getStats: () => request('/proveedores/stats'),
 
   // Productos del proveedor
@@ -201,6 +252,7 @@ export const api = {
     request('/pedidos', { method: 'POST', body: JSON.stringify(data) }),
   updatePedido: (id: number, data: unknown) =>
     request(`/pedidos/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deletePedido: (id: number) => request(`/pedidos/${id}`, { method: 'DELETE' }),
   getReporte: (desde?: string, hasta?: string) => {
     const params = new URLSearchParams();
     if (desde) params.append('desde', desde);

@@ -18,6 +18,7 @@ export default function ProveedoresPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => fetchProveedores(search), 300);
@@ -36,6 +37,21 @@ export default function ProveedoresPage() {
     }
   };
 
+  const handleDelete = async (p: Proveedor) => {
+    if (!confirm(`¿Estás seguro de eliminar a "${p.razonSocial}"? Se eliminarán también sus productos. Esta acción no se puede deshacer.`)) return;
+    setDeletingId(p.id);
+    setError("");
+    try {
+      await api.deleteProveedor(p.id);
+      setProveedores((prev) => prev.filter((x) => x.id !== p.id));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error al eliminar proveedor";
+      setError(msg);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 max-w-full mx-auto">
       <div className="flex items-center justify-between mb-6">
@@ -44,7 +60,7 @@ export default function ProveedoresPage() {
           <p className="text-sm text-slate-500 mt-0.5">Gestiona el directorio de proveedores</p>
         </div>
         <Link href="/dashboard/proveedores/nuevo"
-          className="flex items-center gap-1.5 bg-[#002060] hover:bg-[#002060] text-white text-sm font-medium px-3.5 py-2 rounded-lg transition whitespace-nowrap">
+          className="flex items-center gap-1.5 bg-[#002060] text-white text-sm font-medium px-3.5 py-2 rounded-lg transition whitespace-nowrap">
           <i className="fa-solid fa-plus" />
           <span className="hidden sm:inline">Nuevo proveedor</span>
           <span className="sm:hidden">Nuevo</span>
@@ -109,9 +125,21 @@ export default function ProveedoresPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                      <Link href={`/dashboard/proveedores/${p.id}`} className="text-xs text-slate-400 hover:text-blue-600 transition font-medium inline-flex items-center gap-1">
-                        Ver <i className="fa-solid fa-arrow-right text-[10px]" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-3">
+                        <Link href={`/dashboard/proveedores/${p.id}`} className="text-slate-400 hover:text-blue-600 transition font-medium inline-flex items-center gap-1 text-xs">
+                          Ver <i className="fa-solid fa-arrow-right text-[10px]" />
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(p)}
+                          disabled={deletingId === p.id}
+                          className="text-slate-400 hover:text-red-500 transition cursor-pointer disabled:opacity-40"
+                          title="Eliminar proveedor"
+                        >
+                          {deletingId === p.id
+                            ? <i className="fa-solid fa-spinner fa-spin text-sm" />
+                            : <i className="fa-solid fa-trash text-sm" />}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

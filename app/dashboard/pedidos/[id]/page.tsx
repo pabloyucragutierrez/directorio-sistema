@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 
 interface Pedido {
@@ -25,11 +25,13 @@ interface Pedido {
 
 export default function PedidoDetallePage() {
   const params = useParams();
+  const router = useRouter();
   const id = Number(params.id);
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
 
   const [estado, setEstado] = useState("");
@@ -94,6 +96,21 @@ export default function PedidoDetallePage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!pedido) return;
+    if (!confirm(`¿Estás seguro de eliminar el pedido "${pedido.numero}"? Esta acción no se puede deshacer.`)) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await api.deletePedido(id);
+      router.push("/dashboard/pedidos");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al eliminar");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const StarRow = ({ label, value, setValue }: { label: string; value: number; setValue: (v: number) => void }) => (
     <div className="flex items-center justify-between py-2.5">
       <span className="text-sm text-slate-600">{label}</span>
@@ -125,6 +142,17 @@ export default function PedidoDetallePage() {
             <i className="fa-solid fa-building mr-1" />{pedido.proveedor.razonSocial} ·
             <i className="fa-regular fa-calendar mx-1" />{new Date(pedido.fecha).toLocaleDateString("es-PE")}
           </p>
+        </div>
+        <div className="ml-auto">
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="text-red-600 hover:text-red-700 disabled:opacity-60 text-sm font-medium inline-flex items-center gap-2 cursor-pointer"
+            title="Eliminar pedido"
+          >
+            {deleting ? <><i className="fa-solid fa-spinner fa-spin" /> Eliminando...</> : <><i className="fa-solid fa-trash" /> Eliminar</>}
+          </button>
         </div>
       </div>
 

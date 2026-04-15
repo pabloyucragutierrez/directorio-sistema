@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { removeToken, getToken, getCurrentUser, removeCurrentUser } from "@/lib/api";
+import { removeToken, getToken, getCurrentUser, removeCurrentUser, getRole, removeRole, removeCurrentProveedor } from "@/lib/api";
 
 const navItems = [
   { label: "Proveedores", href: "/dashboard/proveedores", icon: <i className="fa-solid fa-building w-4 text-center" /> },
@@ -23,6 +23,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     const token = getToken();
     if (!token) { router.push("/login"); return; }
+    const role = getRole();
+    if (role === 'proveedor') { router.replace("/proveedor/dashboard"); return; }
     const user = getCurrentUser();
     setCurrentUser(user);
   }, [router]);
@@ -36,7 +38,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handleLogout = () => {
     removeToken();
+    removeRole();
     removeCurrentUser();
+    removeCurrentProveedor();
     router.push("/login");
   };
 

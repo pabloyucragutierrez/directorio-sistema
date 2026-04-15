@@ -2,11 +2,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { api, setToken, setCurrentUser } from "@/lib/api";
+import { api, setToken, setCurrentUser, setCurrentProveedor, setRole, removeCurrentUser, removeCurrentProveedor, removeRole } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -17,10 +17,23 @@ export default function LoginPage() {
     setLoading(true);
     setError(false);
     try {
-      const data = await api.login(email, password);
+      // Limpiar sesión anterior (por si alternan entre admin/proveedor)
+      removeRole();
+      removeCurrentUser();
+      removeCurrentProveedor();
+
+      const data = await api.login(identifier, password);
       setToken(data.access_token);
-      setCurrentUser(data.user);
-      router.push("/dashboard/proveedores");
+      const role = data?.role ?? (data?.proveedor ? "proveedor" : "admin");
+      setRole(role);
+
+      if (role === "proveedor") {
+        setCurrentProveedor(data.proveedor);
+        router.push("/proveedor/dashboard");
+      } else {
+        setCurrentUser(data.user);
+        router.push("/dashboard/proveedores");
+      }
     } catch {
       setError(true);
     } finally {
@@ -80,12 +93,12 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wider">Correo electrónico</label>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wider">Correo o usuario</label>
               <div className="relative">
                 <i className="fa-regular fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
                 <input
-                  type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="usuario@empresa.com" required
+                  type="text" value={identifier} onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="admin@empresa.com" required
                   className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
                 />
               </div>

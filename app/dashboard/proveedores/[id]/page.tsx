@@ -151,41 +151,33 @@ function ProductoModal({ proveedorId, editando, onClose, onSaved }: {
             <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)}
               placeholder="Nombre del producto" className={inputCls} />
           </div>
-
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Descripción</label>
             <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Descripción del producto..." rows={2} className={`${inputCls} resize-none`} />
           </div>
-
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Moneda</label>
             <select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputCls}>
               {MONEDAS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
             </select>
           </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                Precio nacional
-                <span className="text-slate-400 font-normal ml-1">({simbolo})</span>
+                Precio nacional <span className="text-slate-400 font-normal">({simbolo})</span>
               </label>
               <input type="number" min={0} step={0.01} value={precioNacional}
-                onChange={(e) => setPrecioNacional(e.target.value)}
-                placeholder="0.00" className={inputCls} />
+                onChange={(e) => setPrecioNacional(e.target.value)} placeholder="0.00" className={inputCls} />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                Precio dólar
-                <span className="text-slate-400 font-normal ml-1">($)</span>
+                Precio dólar <span className="text-slate-400 font-normal">($)</span>
               </label>
               <input type="number" min={0} step={0.01} value={precioDolar}
-                onChange={(e) => setPrecioDolar(e.target.value)}
-                placeholder="0.00" className={inputCls} />
+                onChange={(e) => setPrecioDolar(e.target.value)} placeholder="0.00" className={inputCls} />
             </div>
           </div>
-
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1.5">Foto</label>
             <label
@@ -217,11 +209,9 @@ function ProductoModal({ proveedorId, editando, onClose, onSaved }: {
         </div>
 
         <div className="flex items-center justify-end gap-3 mt-6">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition cursor-pointer">
-            Cancelar
-          </button>
+          <button onClick={onClose} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition cursor-pointer">Cancelar</button>
           <button onClick={handleSave} disabled={saving}
-            className="bg-[#002060] hover:bg-[#002060] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+            className="bg-[#002060] disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
             {saving ? <><i className="fa-solid fa-spinner fa-spin" /> Guardando...</> : <><i className="fa-solid fa-floppy-disk" /> Guardar</>}
           </button>
         </div>
@@ -261,7 +251,7 @@ function ProductosTab({ proveedorId }: { proveedorId: number }) {
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-slate-500">{productos.length} producto{productos.length !== 1 ? "s" : ""} en el catálogo</p>
         <button onClick={() => { setEditando(null); setShowModal(true); }}
-          className="flex items-center gap-1.5 bg-[#002060] hover:bg-[#002060] text-white text-sm font-medium px-3.5 py-2 rounded-lg transition cursor-pointer">
+          className="flex items-center gap-1.5 bg-[#002060] text-white text-sm font-medium px-3.5 py-2 rounded-lg transition cursor-pointer">
           <i className="fa-solid fa-plus" /> Nuevo producto
         </button>
       </div>
@@ -295,17 +285,11 @@ function ProductosTab({ proveedorId }: { proveedorId: number }) {
                       )}
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         {p.precioNacional != null && (
-                          <span className="text-xs font-semibold text-blue-700">
-                            {sim} {Number(p.precioNacional).toFixed(2)}
-                          </span>
+                          <span className="text-xs font-semibold text-blue-700">{sim} {Number(p.precioNacional).toFixed(2)}</span>
                         )}
-                        {p.precioNacional != null && p.precioDolar != null && (
-                          <span className="text-slate-300 text-xs">·</span>
-                        )}
+                        {p.precioNacional != null && p.precioDolar != null && <span className="text-slate-300 text-xs">·</span>}
                         {p.precioDolar != null && (
-                          <span className="text-xs font-semibold text-emerald-700">
-                            $ {Number(p.precioDolar).toFixed(2)}
-                          </span>
+                          <span className="text-xs font-semibold text-emerald-700">$ {Number(p.precioDolar).toFixed(2)}</span>
                         )}
                       </div>
                     </div>
@@ -346,6 +330,7 @@ export default function ProveedorDetallePage() {
   const [proveedor, setProveedor] = useState<Proveedor | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const [tab, setTab] = useState<"info" | "productos">("info");
 
@@ -368,6 +353,19 @@ export default function ProveedorDetallePage() {
       setError("Error al cambiar estado");
     } finally {
       setToggling(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!proveedor) return;
+    if (!confirm(`¿Estás seguro de eliminar a "${proveedor.razonSocial}"? Se eliminarán también sus productos y pedidos asociados. Esta acción no se puede deshacer.`)) return;
+    setDeleting(true);
+    try {
+      await api.deleteProveedor(id);
+      router.push("/dashboard/proveedores");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al eliminar proveedor");
+      setDeleting(false);
     }
   };
 
@@ -405,6 +403,15 @@ export default function ProveedorDetallePage() {
           <button onClick={handleToggleActivo} disabled={toggling}
             className={`text-xs font-medium px-2.5 py-1 rounded-md transition cursor-pointer disabled:opacity-60 ${proveedor.activo ? "bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600" : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700"}`}>
             {toggling ? <i className="fa-solid fa-spinner fa-spin" /> : proveedor.activo ? "Desactivar" : "Activar"}
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="text-xs font-medium px-2.5 py-1 rounded-md bg-red-50 hover:bg-red-100 text-red-600 transition cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
+            title="Eliminar proveedor"
+          >
+            {deleting ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-trash" />}
+            <span className="hidden sm:inline">Eliminar</span>
           </button>
         </div>
       </div>
@@ -465,14 +472,6 @@ export default function ProveedorDetallePage() {
             </div>
           </DetailSection>
 
-          <DetailSection title="Acceso al portal" icon="fa-solid fa-key">
-            <Row label="Usuario" value={proveedor.usuarioAcceso} />
-            <div className="flex flex-col sm:flex-row sm:items-center px-4 sm:px-5 py-3 gap-1 sm:gap-4">
-              <span className="text-xs sm:text-sm text-slate-400 sm:w-44 sm:flex-shrink-0">Contraseña</span>
-              <span className="text-sm text-slate-400 italic">Oculta por seguridad</span>
-            </div>
-          </DetailSection>
-
           {calificacion !== null && (
             <DetailSection title="Calificación promedio" icon="fa-solid fa-star">
               <div className="px-4 sm:px-5 py-4">
@@ -492,7 +491,7 @@ export default function ProveedorDetallePage() {
 
           <div className="flex justify-end mt-6">
             <button onClick={() => router.push(`/dashboard/proveedores/${proveedor.id}/editar`)}
-              className="bg-[#002060] hover:bg-[#002060] text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
+              className="bg-[#002060] text-white text-sm font-medium px-4 py-2 rounded-lg transition cursor-pointer flex items-center gap-2">
               <i className="fa-solid fa-pen-to-square" />Editar proveedor
             </button>
           </div>
