@@ -280,6 +280,14 @@ export const api = {
     if (hasta) params.append('hasta', hasta);
     return request(`/pedidos/reporte${params.toString() ? `?${params}` : ''}`);
   },
+  getReportePaged: (params?: { desde?: string; hasta?: string; cursor?: number | null; limit?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.desde) qs.append('desde', params.desde);
+    if (params?.hasta) qs.append('hasta', params.hasta);
+    if (params?.cursor != null) qs.append('cursor', String(params.cursor));
+    if (params?.limit != null) qs.append('limit', String(params.limit));
+    return request(`/pedidos/reporte-paged${qs.toString() ? `?${qs.toString()}` : ''}`);
+  },
 
   // Consultas
   getConsultas: (search?: string) =>
