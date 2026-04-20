@@ -227,6 +227,20 @@ export const api = {
   // Proveedores
   getProveedores: (search?: string) =>
     request(`/proveedores${search ? `?search=${encodeURIComponent(search)}` : ''}`),
+  getProveedoresPaged: (params?: { search?: string; cursor?: number | null; limit?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.search) qs.set('search', params.search);
+    if (params?.cursor != null) qs.set('cursor', String(params.cursor));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    return request(`/proveedores/paged${qs.toString() ? `?${qs.toString()}` : ''}`);
+  },
+  getConsultasPaged: (params?: { search?: string; cursor?: number | null; limit?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.search) qs.set('search', params.search);
+    if (params?.cursor != null) qs.set('cursor', String(params.cursor));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    return request(`/proveedores/consultas-paged${qs.toString() ? `?${qs.toString()}` : ''}`);
+  },
   getProveedor: (id: number) => request(`/proveedores/${id}`),
   createProveedor: (formData: FormData) => requestFormData('/proveedores', formData, 'POST'),
   updateProveedor: (id: number, formData: FormData) => requestFormData(`/proveedores/${id}`, formData, 'PATCH'),
@@ -247,6 +261,13 @@ export const api = {
   // Pedidos
   getPedidos: (search?: string) =>
     request(`/pedidos${search ? `?search=${encodeURIComponent(search)}` : ''}`),
+  getPedidosPaged: (params?: { search?: string; cursor?: number | null; limit?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.search) qs.set('search', params.search);
+    if (params?.cursor != null) qs.set('cursor', String(params.cursor));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    return request(`/pedidos/paged${qs.toString() ? `?${qs.toString()}` : ''}`);
+  },
   getPedido: (id: number) => request(`/pedidos/${id}`),
   createPedido: (data: unknown) =>
     request('/pedidos', { method: 'POST', body: JSON.stringify(data) }),
