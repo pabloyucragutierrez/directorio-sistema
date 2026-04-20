@@ -101,31 +101,31 @@ export default function PedidosPage() {
 
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Nro. Pedido</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Proveedor</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Fecha</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Importe</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Estado</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400"><i className="fa-solid fa-spinner fa-spin text-2xl mb-2 block" />Cargando...</td></tr>
-              ) : pedidos.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400"><i className="fa-solid fa-box-open text-2xl mb-2 block" />No se encontraron pedidos</td></tr>
-              ) : (
-                pedidos.map((p) => (
-                  <tr key={p.id} className="hover:bg-blue-50/50 transition">
-                    <td className="px-4 py-3.5 font-mono text-xs text-blue-700 font-semibold whitespace-nowrap">{p.numero}</td>
-                    <td className="px-4 py-3.5 text-slate-700 whitespace-nowrap">{p.proveedor.razonSocial}</td>
-                    <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">
-                      <i className="fa-regular fa-calendar mr-1.5 text-slate-300" />
-                      {new Date(p.fecha).toLocaleDateString("es-PE")}
-                    </td>
+	          <table className="w-full text-sm">
+	            <thead>
+	              <tr className="border-b border-slate-200 bg-slate-50">
+	                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Nro. Pedido</th>
+	                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Proveedor</th>
+	                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Fecha</th>
+	                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Importe</th>
+	                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Estado</th>
+	                <th className="px-4 py-3" />
+	              </tr>
+	            </thead>
+	            <tbody className="divide-y divide-slate-100">
+	              {loading ? (
+	                <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400"><i className="fa-solid fa-spinner fa-spin text-2xl mb-2 block" />Cargando...</td></tr>
+	              ) : pedidos.length === 0 ? (
+	                <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400"><i className="fa-solid fa-box-open text-2xl mb-2 block" />No se encontraron pedidos</td></tr>
+	              ) : (
+	                pedidos.map((p) => (
+	                  <tr key={p.id} className="hover:bg-blue-50/50 transition">
+	                    <td className="px-4 py-3.5 font-mono text-xs text-blue-700 font-semibold whitespace-nowrap">{p.numero}</td>
+	                    <td className="px-4 py-3.5 text-slate-700 whitespace-nowrap">{p.proveedor.razonSocial}</td>
+	                    <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">
+	                      <i className="fa-regular fa-calendar mr-1.5 text-slate-300" />
+	                      {new Date(p.fecha).toLocaleDateString("es-PE")}
+	                    </td>
                     <td className="px-4 py-3.5 text-slate-700 font-medium whitespace-nowrap">S/ {calcImporte(p.productos).toFixed(2)}</td>
                     <td className="px-4 py-3.5 whitespace-nowrap">
                       <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium ${estadoStyle[p.estado] ?? ""}`}>

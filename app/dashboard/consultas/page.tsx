@@ -6,6 +6,7 @@ interface Proveedor {
   id: number;
   razonSocial: string;
   pais: string;
+  rubro?: string | null;
   activo: boolean;
   pedidos?: { calidad?: number; respuesta?: number; puntualidad?: number; confianza?: number; presentacion?: number }[];
 }
@@ -44,7 +45,7 @@ export default function ConsultasPage() {
       <div className="flex items-center gap-3 mb-4">
         <div className="relative w-full sm:w-72">
           <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nombre o país..."
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nombre, rubro o país..."
             className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition" />
         </div>
       </div>
@@ -55,6 +56,7 @@ export default function ConsultasPage() {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Proveedor</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Rubro</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">País</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Pedidos</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Calificación</th>
@@ -63,10 +65,11 @@ export default function ConsultasPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-400"><i className="fa-solid fa-spinner fa-spin text-2xl mb-2 block" />Cargando...</td></tr>
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400"><i className="fa-solid fa-spinner fa-spin text-2xl mb-2 block" />Cargando...</td></tr>
               ) : proveedores.map((d) => (
                 <tr key={d.id} className="hover:bg-blue-50/50 transition">
                   <td className="px-4 py-3.5 font-medium text-slate-800 whitespace-nowrap">{d.razonSocial}</td>
+                  <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">{d.rubro ?? "—"}</td>
                   <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap">
                     <i className="fa-solid fa-location-dot mr-1.5 text-slate-300" />{d.pais}
                   </td>

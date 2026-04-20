@@ -20,6 +20,8 @@ const SIMBOLO: Record<string, string> = {
   PEN: "S/", USD: "$", COP: "$", CLP: "$", ARS: "$", BOB: "Bs", BRL: "R$", MXN: "$", EUR: "€",
 };
 
+const isPdfUrl = (url: string) => url.toLowerCase().includes(".pdf") || url.includes("/raw/");
+
 interface Producto {
   id: number;
   nombre: string;
@@ -37,6 +39,7 @@ interface Proveedor {
   licencia?: string; copiaRucUrl?: string; copiaLicenciaUrl?: string;
   telefono?: string; whatsapp?: string; representante?: string; dni?: string;
   telefonoRep?: string; copiaDniUrl?: string; formaPago?: string; datosPago?: string;
+  comentarios?: string;
   activo: boolean; usuarioAcceso?: string;
   pedidos?: { calidad?: number; respuesta?: number; puntualidad?: number; confianza?: number; presentacion?: number }[];
 }
@@ -49,7 +52,7 @@ const ENTREGA_LABEL: Record<string, string> = {
 
 function FilePreview({ url, label }: { url?: string; label: string }) {
   if (!url) return <span className="text-sm text-slate-400">—</span>;
-  const isPdf = url.toLowerCase().includes('.pdf') || url.includes('/raw/');
+  const isPdf = isPdfUrl(url);
   return (
     <div className="flex items-center gap-2">
       {isPdf ? (
@@ -89,6 +92,7 @@ function ProductoModal({ proveedorId, editando, onClose, onSaved }: {
   const [isDragging, setIsDragging] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const isPreviewPdf = !!preview && (preview.startsWith("data:application/pdf") || isPdfUrl(preview));
 
   const handleFoto = (file: File | null) => {
     setFoto(file);
@@ -178,35 +182,42 @@ function ProductoModal({ proveedorId, editando, onClose, onSaved }: {
                 onChange={(e) => setPrecioDolar(e.target.value)} placeholder="0.00" className={inputCls} />
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Foto</label>
-            <label
-              htmlFor={inputId}
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFoto(e.dataTransfer.files?.[0] ?? null); }}
+	          <div>
+	            <label className="block text-xs font-medium text-slate-600 mb-1.5">Foto / PDF</label>
+	            <label
+	              htmlFor={inputId}
+	              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+	              onDragLeave={() => setIsDragging(false)}
+	              onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFoto(e.dataTransfer.files?.[0] ?? null); }}
               className={`relative flex flex-col items-center justify-center w-full h-32 rounded-xl border-2 border-dashed cursor-pointer transition overflow-hidden
                 ${isDragging ? "border-blue-400 bg-blue-50" : preview ? "border-slate-200" : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/40"}`}
-            >
-              {preview ? (
-                <>
-                  <img src={preview} alt="preview" className="absolute inset-0 w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition">
-                    <i className="fa-solid fa-arrow-up-from-bracket text-white text-xl mb-1" />
-                    <span className="text-white text-xs font-medium">Cambiar imagen</span>
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <i className="fa-solid fa-cloud-arrow-up text-slate-300 text-2xl" />
-                  <span className="text-xs text-slate-400">Arrastra o haz clic para subir</span>
-                </div>
-              )}
-            </label>
-            <input id={inputId} type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden"
-              onChange={(e) => handleFoto(e.target.files?.[0] ?? null)} />
-          </div>
-        </div>
+	            >
+	              {preview ? (
+	                <>
+	                  {isPreviewPdf ? (
+	                    <div className="absolute inset-0 w-full h-full bg-slate-50 flex flex-col items-center justify-center">
+	                      <i className="fa-solid fa-file-pdf text-4xl text-red-500" />
+	                      <span className="text-xs text-slate-500 mt-1">PDF seleccionado</span>
+	                    </div>
+	                  ) : (
+	                    <img src={preview} alt="preview" className="absolute inset-0 w-full h-full object-cover" />
+	                  )}
+	                  <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition">
+	                    <i className="fa-solid fa-arrow-up-from-bracket text-white text-xl mb-1" />
+	                    <span className="text-white text-xs font-medium">Cambiar archivo</span>
+	                  </div>
+	                </>
+	              ) : (
+	                <div className="flex flex-col items-center gap-2">
+	                  <i className="fa-solid fa-cloud-arrow-up text-slate-300 text-2xl" />
+	                  <span className="text-xs text-slate-400">Arrastra o haz clic para subir</span>
+	                </div>
+	              )}
+	            </label>
+	            <input id={inputId} type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,application/pdf" className="hidden"
+	              onChange={(e) => handleFoto(e.target.files?.[0] ?? null)} />
+	          </div>
+	        </div>
 
         <div className="flex items-center justify-end gap-3 mt-6">
           <button onClick={onClose} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition cursor-pointer">Cancelar</button>
@@ -267,15 +278,23 @@ function ProductosTab({ proveedorId }: { proveedorId: number }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {productos.map((p) => {
             const sim = SIMBOLO[p.moneda ?? "PEN"] ?? p.moneda ?? "S/";
-            return (
-              <div key={p.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
-                {p.fotoUrl ? (
-                  <img src={p.fotoUrl} alt={p.nombre} className="w-full h-36 object-cover" />
-                ) : (
-                  <div className="w-full h-36 bg-slate-100 flex items-center justify-center">
-                    <i className="fa-solid fa-image text-2xl text-slate-300" />
-                  </div>
-                )}
+	            return (
+	              <div key={p.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
+	                {p.fotoUrl ? (
+	                  isPdfUrl(p.fotoUrl) ? (
+	                    <a href={p.fotoUrl} target="_blank" rel="noopener noreferrer"
+	                      className="w-full h-36 bg-slate-50 flex flex-col items-center justify-center text-slate-500 hover:text-blue-700 transition">
+	                      <i className="fa-solid fa-file-pdf text-3xl text-red-500" />
+	                      <span className="text-xs mt-1">Ver PDF</span>
+	                    </a>
+	                  ) : (
+	                    <img src={p.fotoUrl} alt={p.nombre} className="w-full h-36 object-cover" />
+	                  )
+	                ) : (
+	                  <div className="w-full h-36 bg-slate-100 flex items-center justify-center">
+	                    <i className="fa-solid fa-image text-2xl text-slate-300" />
+	                  </div>
+	                )}
                 <div className="p-3 flex flex-col gap-1 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -470,6 +489,10 @@ export default function ProveedorDetallePage() {
               <span className="text-xs sm:text-sm text-slate-400 sm:w-44 sm:flex-shrink-0">Copia DNI / CI / ID</span>
               <FilePreview url={proveedor.copiaDniUrl} label="Ver documento" />
             </div>
+          </DetailSection>
+
+          <DetailSection title="Comentarios" icon="fa-solid fa-comment-dots">
+            <Row label="Comentarios" value={proveedor.comentarios} />
           </DetailSection>
 
           {calificacion !== null && (
