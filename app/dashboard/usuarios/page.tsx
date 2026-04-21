@@ -1,12 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
-
-interface Proveedor {
-  id: number;
-  razonSocial: string;
-  email?: string | null;
-}
+import ProveedorAsyncSelect, { type ProveedorOption } from "@/app/dashboard/components/ProveedorAsyncSelect";
 
 interface Usuario {
   id: number;
@@ -21,7 +16,7 @@ interface Usuario {
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const [selectedProveedor, setSelectedProveedor] = useState<ProveedorOption | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -39,14 +34,13 @@ export default function UsuariosPage() {
 
   useEffect(() => {
     fetchUsuarios();
-    api.getProveedores().then(setProveedores).catch(() => {});
   }, []);
 
-  const handleProveedorChange = (proveedorId: string) => {
-    const prov = proveedores.find((p) => p.id === Number(proveedorId));
+  const handleProveedorChange = (prov: ProveedorOption | null) => {
+    setSelectedProveedor(prov);
     setForm((f) => ({
       ...f,
-      proveedorId,
+      proveedorId: prov ? String(prov.id) : "",
       nombre: prov?.razonSocial ?? f.nombre,
       email: (prov?.email ?? "") || f.email,
     }));
@@ -67,6 +61,7 @@ export default function UsuariosPage() {
   const openCrear = () => {
     setEditando(null);
     setForm({ nombre: "", email: "", password: "", rol: "administrador", proveedorId: "" });
+    setSelectedProveedor(null);
     setFormError("");
     setShowModal(true);
   };
@@ -80,6 +75,7 @@ export default function UsuariosPage() {
       rol: u.rol ?? "administrador",
       proveedorId: u.proveedorId?.toString() ?? "",
     });
+    setSelectedProveedor(u.proveedorId && u.proveedor ? { id: u.proveedor.id, razonSocial: u.proveedor.razonSocial } : null);
     setFormError("");
     setShowModal(true);
   };
@@ -264,7 +260,10 @@ export default function UsuariosPage() {
                 <label className="block text-xs font-medium text-slate-600 mb-1.5">Rol <span className="text-red-500">*</span></label>
                 <select
                   value={form.rol}
-                  onChange={(e) => setForm((f) => ({ ...f, rol: e.target.value, proveedorId: "" }))}
+                  onChange={(e) => {
+                    setSelectedProveedor(null);
+                    setForm((f) => ({ ...f, rol: e.target.value, proveedorId: "" }));
+                  }}
                   className={inputCls}
                 >
                   <option value="administrador">Administrador</option>
@@ -277,16 +276,12 @@ export default function UsuariosPage() {
                   <label className="block text-xs font-medium text-slate-600 mb-1.5">
                     Proveedor vinculado <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    value={form.proveedorId}
-                    onChange={(e) => handleProveedorChange(e.target.value)}
-                    className={inputCls}
-                  >
-                    <option value="">Seleccionar proveedor</option>
-                    {proveedores.map((p) => (
-                      <option key={p.id} value={p.id}>{p.razonSocial}</option>
-                    ))}
-                  </select>
+                  <ProveedorAsyncSelect
+                    selected={selectedProveedor}
+                    onSelect={handleProveedorChange}
+                    placeholder="Buscar proveedor..."
+                    inputClassName={inputCls}
+                  />
                   <p className="text-xs text-slate-400 mt-1">
                     <i className="fa-solid fa-circle-info mr-1" />
                     Este usuario podrá gestionar el sistema asociado a ese proveedor.

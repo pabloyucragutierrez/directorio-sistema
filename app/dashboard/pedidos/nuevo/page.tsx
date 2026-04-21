@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import ProveedorAsyncSelect, { type ProveedorOption } from "@/app/dashboard/components/ProveedorAsyncSelect";
 
 interface ProductoCatalogo {
   id: number;
@@ -22,11 +23,6 @@ interface LineaPedido {
   esCatalogo: boolean;
 }
 
-interface Proveedor {
-  id: number;
-  razonSocial: string;
-}
-
 const SIMBOLO: Record<string, string> = {
   PEN: "S/", USD: "$", COP: "$", CLP: "$", ARS: "$", BOB: "Bs", BRL: "R$", MXN: "$", EUR: "€",
 };
@@ -35,8 +31,8 @@ export default function NuevoPedidoPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
-  const [proveedorId, setProveedorId] = useState("");
+  const [selectedProveedor, setSelectedProveedor] = useState<ProveedorOption | null>(null);
+  const [proveedorId, setProveedorId] = useState<number | null>(null);
   const [catalogo, setCatalogo] = useState<ProductoCatalogo[]>([]);
   const [loadingCatalogo, setLoadingCatalogo] = useState(false);
   const [numero, setNumero] = useState("");
@@ -45,13 +41,9 @@ export default function NuevoPedidoPage() {
   const [lineas, setLineas] = useState<LineaPedido[]>([]);
 
   useEffect(() => {
-    api.getProveedores().then(setProveedores).catch(() => {});
-  }, []);
-
-  useEffect(() => {
     if (!proveedorId) { setCatalogo([]); return; }
     setLoadingCatalogo(true);
-    api.getProductosProveedor(Number(proveedorId))
+    api.getProductosProveedor(proveedorId)
       .then(setCatalogo)
       .catch(() => setCatalogo([]))
       .finally(() => setLoadingCatalogo(false));
@@ -81,6 +73,7 @@ export default function NuevoPedidoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!proveedorId) { setError("Selecciona un proveedor"); return; }
     if (lineas.length === 0) { setError("Agrega al menos un producto desde el catálogo"); return; }
     setLoading(true);
     setError("");
@@ -90,7 +83,7 @@ export default function NuevoPedidoPage() {
         : new Date().toISOString();
       await api.createPedido({
         numero,
-        proveedorId: Number(proveedorId),
+        proveedorId,
         fecha: fechaHora,
         productos: lineas.map(({ nombre, cantidad, precio }) => ({ nombre, cantidad, precio })),
       });
@@ -133,10 +126,15 @@ export default function NuevoPedidoPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">Proveedor <span className="text-red-500">*</span></label>
-              <select value={proveedorId} onChange={(e) => setProveedorId(e.target.value)} required className={inputCls}>
-                <option value="">Seleccionar proveedor</option>
-                {proveedores.map((p) => <option key={p.id} value={p.id}>{p.razonSocial}</option>)}
-              </select>
+              <ProveedorAsyncSelect
+                selected={selectedProveedor}
+                onSelect={(p) => {
+                  setSelectedProveedor(p);
+                  setProveedorId(p?.id ?? null);
+                }}
+                placeholder="Buscar proveedor..."
+                inputClassName={inputCls}
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1.5">Fecha <span className="text-red-500">*</span></label>
