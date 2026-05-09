@@ -1,5 +1,9 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+function normalizeSearchQuery(value: string) {
+  return value.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+}
+
 export function getToken() {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('token');
@@ -236,7 +240,7 @@ export const api = {
   },
   getConsultasPaged: (params?: { search?: string; rubro?: string; cursor?: number | null; limit?: number }) => {
     const qs = new URLSearchParams();
-    if (params?.search) qs.set('search', params.search);
+    if (params?.search) qs.set('search', normalizeSearchQuery(params.search));
     if (params?.rubro) qs.set('rubro', params.rubro);
     if (params?.cursor != null) qs.set('cursor', String(params.cursor));
     if (params?.limit != null) qs.set('limit', String(params.limit));
