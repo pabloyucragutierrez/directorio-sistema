@@ -234,13 +234,15 @@ export const api = {
     if (params?.limit != null) qs.set('limit', String(params.limit));
     return request(`/proveedores/paged${qs.toString() ? `?${qs.toString()}` : ''}`);
   },
-  getConsultasPaged: (params?: { search?: string; cursor?: number | null; limit?: number }) => {
+  getConsultasPaged: (params?: { search?: string; rubro?: string; cursor?: number | null; limit?: number }) => {
     const qs = new URLSearchParams();
     if (params?.search) qs.set('search', params.search);
+    if (params?.rubro) qs.set('rubro', params.rubro);
     if (params?.cursor != null) qs.set('cursor', String(params.cursor));
     if (params?.limit != null) qs.set('limit', String(params.limit));
     return request(`/proveedores/consultas-paged${qs.toString() ? `?${qs.toString()}` : ''}`);
   },
+  getRubros: () => request('/proveedores/rubros'),
   getProveedor: (id: number) => request(`/proveedores/${id}`),
   createProveedor: (formData: FormData) => requestFormData('/proveedores', formData, 'POST'),
   updateProveedor: (id: number, formData: FormData) => requestFormData(`/proveedores/${id}`, formData, 'PATCH'),

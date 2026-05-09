@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api";
 
 interface Proveedor {
@@ -21,6 +22,7 @@ interface ConsultasPagedResponse {
   items: Proveedor[];
   hasMore: boolean;
   nextCursor: number | null;
+  total: number;
 }
 
 export default function ConsultasPage() {
@@ -28,6 +30,9 @@ export default function ConsultasPage() {
 
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [search, setSearch] = useState("");
+  const [rubro, setRubro] = useState<string>("");
+  const [rubros, setRubros] = useState<string[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [loadingInitial, setLoadingInitial] = useState(true);
@@ -37,6 +42,23 @@ export default function ConsultasPage() {
   const requestIdRef = useRef(0);
 
   useEffect(() => {
+    let mounted = true;
+    api
+      .getRubros()
+      .then((data) => {
+        if (!mounted) return;
+        if (Array.isArray(data)) setRubros(data.filter((x) => typeof x === "string") as string[]);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setRubros([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(async () => {
       const requestId = ++requestIdRef.current;
       setLoadingInitial(true);
@@ -44,6 +66,7 @@ export default function ConsultasPage() {
       try {
         const data = await api.getConsultasPaged({
           search: search.trim() || undefined,
+          rubro: rubro || undefined,
           limit: pageSize,
         }) as ConsultasPagedResponse;
 
@@ -52,11 +75,13 @@ export default function ConsultasPage() {
         setProveedores(data.items);
         setCursor(data.nextCursor);
         setHasMore(Boolean(data.hasMore));
+        setTotal(Number.isFinite(data.total) ? data.total : null);
       } catch {
         if (requestId !== requestIdRef.current) return;
         setProveedores([]);
         setCursor(null);
         setHasMore(false);
+        setTotal(null);
       } finally {
         if (requestId !== requestIdRef.current) return;
         setLoadingInitial(false);
@@ -64,7 +89,7 @@ export default function ConsultasPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [rubro, search]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -78,6 +103,7 @@ export default function ConsultasPage() {
         try {
           const data = await api.getConsultasPaged({
             search: search.trim() || undefined,
+            rubro: rubro || undefined,
             cursor,
             limit: pageSize,
           }) as ConsultasPagedResponse;
@@ -96,7 +122,7 @@ export default function ConsultasPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [cursor, hasMore, loadingInitial, loadingMore, search]);
+  }, [cursor, hasMore, loadingInitial, loadingMore, rubro, search]);
 
   const calcCalificacion = (proveedor: Proveedor) => {
     if (!proveedor.pedidos || proveedor.pedidos.length === 0) return 0;
@@ -124,7 +150,7 @@ export default function ConsultasPage() {
         <p className="text-sm text-slate-500 mt-0.5">Busca y consulta proveedores y pedidos</p>
       </div>
 
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div className="relative w-full sm:w-72">
           <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
           <input
@@ -134,6 +160,35 @@ export default function ConsultasPage() {
             className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
           />
         </div>
+
+        <div className="flex items-center gap-3">
+          <div className="w-full sm:w-64">
+            <select
+              value={rubro}
+              onChange={(e) => setRubro(e.target.value)}
+              className="w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+            >
+              <option value="">Todos los rubros</option>
+              {rubros.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 whitespace-nowrap">
+            <i className="fa-solid fa-database text-slate-400" />
+            <span>Total:</span>
+            <span className="font-semibold text-slate-800">{total ?? (loadingInitial ? "…" : 0)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="sm:hidden mb-3 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 w-fit">
+        <i className="fa-solid fa-database text-slate-400" />
+        <span>Total:</span>
+        <span className="font-semibold text-slate-800">{total ?? (loadingInitial ? "…" : 0)}</span>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -147,19 +202,20 @@ export default function ConsultasPage() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Pedidos</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Calificacion</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Estado</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loadingInitial ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400">
+                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">
                     <i className="fa-solid fa-spinner fa-spin text-2xl mb-2 block" />
                     Cargando...
                   </td>
                 </tr>
               ) : proveedores.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400">
+                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">
                     <i className="fa-solid fa-box-open text-2xl mb-2 block" />
                     No se encontraron resultados
                   </td>
@@ -188,6 +244,14 @@ export default function ConsultasPage() {
                         <i className={`fa-solid fa-circle text-[6px] ${proveedor.activo ? "text-emerald-500" : "text-slate-400"}`} />
                         {proveedor.activo ? "Activo" : "Inactivo"}
                       </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                      <Link
+                        href={`/dashboard/consultas/${proveedor.id}`}
+                        className="text-slate-400 hover:text-blue-600 transition font-medium inline-flex items-center gap-1 text-xs"
+                      >
+                        Ver <i className="fa-solid fa-arrow-right text-[10px]" />
+                      </Link>
                     </td>
                   </tr>
                 ))
