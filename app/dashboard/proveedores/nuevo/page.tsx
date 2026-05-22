@@ -165,6 +165,7 @@ const RUBROS: Record<string, string[]> = {
   "PASTELERÍA / TORTAS": ["Tortas", "Pasteles", "Panes"],
   POSTRES: ["Postres en general"],
   "PLATOS A LA CARTA": ["Variedad de comida"],
+  TRANSPORTE: ["Delivery"],
 };
 const RUBROS_LIST = Object.keys(RUBROS);
 
