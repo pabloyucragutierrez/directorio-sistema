@@ -200,7 +200,9 @@ function ProductoModal({ proveedorId, editando, onClose, onSaved }: {
 	                      <span className="text-xs text-slate-500 mt-1">PDF seleccionado</span>
 	                    </div>
 	                  ) : (
-	                    <img src={preview} alt="preview" className="absolute inset-0 w-full h-full object-cover" />
+	                    <a href={preview} target="_blank" rel="noopener noreferrer" className="absolute inset-0 w-full h-full block">
+	                      <img src={preview} alt="preview" className="absolute inset-0 w-full h-full object-cover" />
+	                    </a>
 	                  )}
 	                  <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition">
 	                    <i className="fa-solid fa-arrow-up-from-bracket text-white text-xl mb-1" />
@@ -288,7 +290,9 @@ function ProductosTab({ proveedorId }: { proveedorId: number }) {
 	                      <span className="text-xs mt-1">Ver PDF</span>
 	                    </a>
 	                  ) : (
-	                    <img src={p.fotoUrl} alt={p.nombre} className="w-full h-36 object-cover" />
+	                    <a href={p.fotoUrl} target="_blank" rel="noopener noreferrer" className="block w-full h-36 overflow-hidden">
+                        <img src={p.fotoUrl} alt={p.nombre} className="w-full h-full object-cover" />
+                      </a>
 	                  )
 	                ) : (
 	                  <div className="w-full h-36 bg-slate-100 flex items-center justify-center">

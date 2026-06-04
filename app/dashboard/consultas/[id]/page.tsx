@@ -270,7 +270,9 @@ export default function ConsultaDetallePage() {
                                 <span className="text-xs mt-1">Ver PDF</span>
                               </a>
                             ) : (
-                              <img src={p.fotoUrl} alt={p.nombre} className="w-full h-36 object-cover" />
+                              <a href={p.fotoUrl} target="_blank" rel="noopener noreferrer" className="block w-full h-36 overflow-hidden">
+                                <img src={p.fotoUrl} alt={p.nombre} className="w-full h-full object-cover" />
+                              </a>
                             )
                           ) : (
                             <div className="w-full h-36 bg-slate-100 flex items-center justify-center">
