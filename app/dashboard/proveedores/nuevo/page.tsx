@@ -289,8 +289,6 @@ export default function NuevoProveedorPage() {
   const [copiaDni, setCopiaDni] = useState<File | null>(null);
 
   const ciudades = pais ? (PAISES_CIUDADES[pais] ?? []) : [];
-  const subrubroOptions = rubro ? (RUBROS[rubro] ?? []) : [];
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -471,23 +469,13 @@ export default function NuevoProveedorPage() {
               </select>
             </Field>
             <Field label="Subrubro">
-              <select
+              <input
+                type="text"
                 value={subrubro}
                 onChange={(e) => setSubrubro(e.target.value)}
-                disabled={!rubro}
+                placeholder="Escribe el subrubro"
                 className={inputCls}
-              >
-                <option value="">
-                  {rubro
-                    ? "Seleccionar subrubro"
-                    : "Primero selecciona un rubro"}
-                </option>
-                {subrubroOptions.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+              />
             </Field>
             <Field label="Entrega (incluye delivery)">
               <select name="entrega" className={inputCls}>

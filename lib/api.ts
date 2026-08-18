@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://directorio-backend-production.up.railway.app';
 
 function normalizeSearchQuery(value: string) {
   return value.normalize('NFD').replace(/\p{Diacritic}/gu, '');
@@ -238,10 +238,12 @@ export const api = {
     if (params?.limit != null) qs.set('limit', String(params.limit));
     return request(`/proveedores/paged${qs.toString() ? `?${qs.toString()}` : ''}`);
   },
-  getConsultasPaged: (params?: { search?: string; rubro?: string; cursor?: number | null; limit?: number }) => {
+  getConsultasPaged: (params?: { search?: string; rubro?: string; ciudad?: string; subrubro?: string; cursor?: number | null; limit?: number }) => {
     const qs = new URLSearchParams();
     if (params?.search) qs.set('search', normalizeSearchQuery(params.search));
     if (params?.rubro) qs.set('rubro', params.rubro);
+    if (params?.ciudad) qs.set('ciudad', normalizeSearchQuery(params.ciudad));
+    if (params?.subrubro) qs.set('subrubro', normalizeSearchQuery(params.subrubro));
     if (params?.cursor != null) qs.set('cursor', String(params.cursor));
     if (params?.limit != null) qs.set('limit', String(params.limit));
     return request(`/proveedores/consultas-paged${qs.toString() ? `?${qs.toString()}` : ''}`);

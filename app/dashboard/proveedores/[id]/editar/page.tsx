@@ -237,8 +237,6 @@ export default function EditarProveedorPage() {
   };
 
   const ciudades = form.pais ? (PAISES_CIUDADES[form.pais] ?? []) : [];
-  const subrubroOptions = form.rubro ? (RUBROS[form.rubro] ?? []) : [];
-
   if (fetching) return (
     <div className="p-6 text-center text-slate-400">
       <i className="fa-solid fa-spinner fa-spin text-2xl" />
@@ -300,10 +298,7 @@ export default function EditarProveedorPage() {
               </select>
             </Field>
             <Field label="Subrubro">
-              <select value={form.subrubro} onChange={(e) => set("subrubro", e.target.value)} disabled={!form.rubro} className={inputCls}>
-                <option value="">{form.rubro ? "Seleccionar subrubro" : "Primero selecciona un rubro"}</option>
-                {subrubroOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <input type="text" value={form.subrubro} onChange={(e) => set("subrubro", e.target.value)} placeholder="Escribe el subrubro" className={inputCls} />
             </Field>
             <Field label="Entrega (incluye delivery)">
               <select value={form.entrega} onChange={(e) => set("entrega", e.target.value)} className={inputCls}>

@@ -8,6 +8,8 @@ interface Proveedor {
   razonSocial: string;
   pais: string;
   rubro?: string | null;
+  ciudad?: string | null;
+  subrubro?: string | null;
   activo: boolean;
   pedidos?: {
     calidad?: number;
@@ -31,6 +33,8 @@ export default function ConsultasPage() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [search, setSearch] = useState("");
   const [rubro, setRubro] = useState<string>("");
+  const [ciudad, setCiudad] = useState("");
+  const [subrubro, setSubrubro] = useState("");
   const [rubros, setRubros] = useState<string[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [cursor, setCursor] = useState<number | null>(null);
@@ -67,6 +71,8 @@ export default function ConsultasPage() {
         const data = await api.getConsultasPaged({
           search: search.trim() || undefined,
           rubro: rubro || undefined,
+          ciudad: ciudad.trim() || undefined,
+          subrubro: subrubro.trim() || undefined,
           limit: pageSize,
         }) as ConsultasPagedResponse;
 
@@ -89,7 +95,7 @@ export default function ConsultasPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [rubro, search]);
+  }, [ciudad, rubro, search, subrubro]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -104,6 +110,8 @@ export default function ConsultasPage() {
           const data = await api.getConsultasPaged({
             search: search.trim() || undefined,
             rubro: rubro || undefined,
+            ciudad: ciudad.trim() || undefined,
+            subrubro: subrubro.trim() || undefined,
             cursor,
             limit: pageSize,
           }) as ConsultasPagedResponse;
@@ -122,7 +130,7 @@ export default function ConsultasPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [cursor, hasMore, loadingInitial, loadingMore, rubro, search]);
+  }, [ciudad, cursor, hasMore, loadingInitial, loadingMore, rubro, search, subrubro]);
 
   const calcCalificacion = (proveedor: Proveedor) => {
     if (!proveedor.pedidos || proveedor.pedidos.length === 0) return 0;
@@ -176,6 +184,20 @@ export default function ConsultasPage() {
               ))}
             </select>
           </div>
+
+          <input
+            value={ciudad}
+            onChange={(e) => setCiudad(e.target.value)}
+            placeholder="Buscar por ciudad"
+            className="w-full sm:w-52 bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+          />
+
+          <input
+            value={subrubro}
+            onChange={(e) => setSubrubro(e.target.value)}
+            placeholder="Buscar por subrubro"
+            className="w-full sm:w-52 bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+          />
 
           <div className="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 whitespace-nowrap">
             <i className="fa-solid fa-database text-slate-400" />
