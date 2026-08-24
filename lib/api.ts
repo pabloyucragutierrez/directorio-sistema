@@ -251,6 +251,7 @@ export const api = {
   },
   getRubros: () => request('/proveedores/rubros'),
   getSubrubros: () => request('/proveedores/subrubros'),
+  getCiudades: (pais?: string) => request(`/proveedores/ciudades${pais ? `?pais=${encodeURIComponent(pais)}` : ''}`),
   getProveedor: (id: number) => request(`/proveedores/${id}`),
   createProveedor: (formData: FormData) => requestFormData('/proveedores', formData, 'POST'),
   updateProveedor: (id: number, formData: FormData) => requestFormData(`/proveedores/${id}`, formData, 'PATCH'),

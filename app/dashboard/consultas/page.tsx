@@ -58,6 +58,8 @@ export default function ConsultasPage() {
   const [rubros, setRubros] = useState<string[]>([]);
   const [subrubro, setSubrubro] = useState<string>("");
   const [subrubros, setSubrubros] = useState<string[]>([]);
+  const [ciudad, setCiudad] = useState<string>("");
+  const [ciudades, setCiudades] = useState<string[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(true);
@@ -86,6 +88,14 @@ export default function ConsultasPage() {
   }, []);
 
   useEffect(() => {
+    setCiudad("");
+    api
+      .getCiudades(pais || undefined)
+      .then((data) => setCiudades(Array.isArray(data) ? data.filter((x) => typeof x === "string") as string[] : []))
+      .catch(() => setCiudades([]));
+  }, [pais]);
+
+  useEffect(() => {
     const timer = setTimeout(async () => {
       const requestId = ++requestIdRef.current;
       setLoadingInitial(true);
@@ -96,6 +106,7 @@ export default function ConsultasPage() {
           pais: pais || undefined,
           rubro: rubro || undefined,
           subrubro: subrubro || undefined,
+          ciudad: ciudad || undefined,
           limit: pageSize,
         }) as ConsultasPagedResponse;
 
@@ -118,7 +129,7 @@ export default function ConsultasPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [pais, rubro, search, subrubro]);
+  }, [ciudad, pais, rubro, search, subrubro]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -135,6 +146,7 @@ export default function ConsultasPage() {
             pais: pais || undefined,
             rubro: rubro || undefined,
             subrubro: subrubro || undefined,
+            ciudad: ciudad || undefined,
             cursor,
             limit: pageSize,
           }) as ConsultasPagedResponse;
@@ -153,7 +165,7 @@ export default function ConsultasPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [cursor, hasMore, loadingInitial, loadingMore, pais, rubro, search, subrubro]);
+  }, [ciudad, cursor, hasMore, loadingInitial, loadingMore, pais, rubro, search, subrubro]);
 
   const calcCalificacion = (proveedor: Proveedor) => {
     if (!proveedor.pedidos || proveedor.pedidos.length === 0) return 0;
@@ -204,6 +216,22 @@ export default function ConsultasPage() {
               {PAISES.map((p) => (
                 <option key={p} value={p}>
                   {p}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="w-full sm:w-52">
+            <select
+              value={ciudad}
+              onChange={(e) => setCiudad(e.target.value)}
+              aria-label="Filtrar por ciudad"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+            >
+              <option value="">Todas las ciudades</option>
+              {ciudades.map((c) => (
+                <option key={c} value={c}>
+                  {c}
                 </option>
               ))}
             </select>
