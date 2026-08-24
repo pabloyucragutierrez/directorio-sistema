@@ -27,11 +27,33 @@ interface ConsultasPagedResponse {
   total: number;
 }
 
+const PAISES = [
+  "Argentina",
+  "Belice",
+  "Bolivia",
+  "Brasil",
+  "Chile",
+  "Colombia",
+  "Ecuador",
+  "Guatemala",
+  "Guyana",
+  "Honduras",
+  "México",
+  "Nicaragua",
+  "Panamá",
+  "Paraguay",
+  "Perú",
+  "Surinam",
+  "Uruguay",
+  "Venezuela",
+];
+
 export default function ConsultasPage() {
   const pageSize = 20;
 
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [search, setSearch] = useState("");
+  const [pais, setPais] = useState<string>("");
   const [rubro, setRubro] = useState<string>("");
   const [rubros, setRubros] = useState<string[]>([]);
   const [total, setTotal] = useState<number | null>(null);
@@ -68,6 +90,7 @@ export default function ConsultasPage() {
       try {
         const data = await api.getConsultasPaged({
           search: search.trim() || undefined,
+          pais: pais || undefined,
           rubro: rubro || undefined,
           limit: pageSize,
         }) as ConsultasPagedResponse;
@@ -91,7 +114,7 @@ export default function ConsultasPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [rubro, search]);
+  }, [pais, rubro, search]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -105,6 +128,7 @@ export default function ConsultasPage() {
         try {
           const data = await api.getConsultasPaged({
             search: search.trim() || undefined,
+            pais: pais || undefined,
             rubro: rubro || undefined,
             cursor,
             limit: pageSize,
@@ -124,7 +148,7 @@ export default function ConsultasPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [cursor, hasMore, loadingInitial, loadingMore, rubro, search]);
+  }, [cursor, hasMore, loadingInitial, loadingMore, pais, rubro, search]);
 
   const calcCalificacion = (proveedor: Proveedor) => {
     if (!proveedor.pedidos || proveedor.pedidos.length === 0) return 0;
@@ -164,6 +188,22 @@ export default function ConsultasPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <div className="w-full sm:w-52">
+            <select
+              value={pais}
+              onChange={(e) => setPais(e.target.value)}
+              aria-label="Filtrar por país"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+            >
+              <option value="">Todos los países</option>
+              {PAISES.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="w-full sm:w-64">
             <select
               value={rubro}

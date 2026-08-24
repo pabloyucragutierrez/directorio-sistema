@@ -238,9 +238,10 @@ export const api = {
     if (params?.limit != null) qs.set('limit', String(params.limit));
     return request(`/proveedores/paged${qs.toString() ? `?${qs.toString()}` : ''}`);
   },
-  getConsultasPaged: (params?: { search?: string; rubro?: string; ciudad?: string; subrubro?: string; cursor?: number | null; limit?: number }) => {
+  getConsultasPaged: (params?: { search?: string; pais?: string; rubro?: string; ciudad?: string; subrubro?: string; cursor?: number | null; limit?: number }) => {
     const qs = new URLSearchParams();
     if (params?.search) qs.set('search', normalizeSearchQuery(params.search));
+    if (params?.pais) qs.set('pais', normalizeSearchQuery(params.pais));
     if (params?.rubro) qs.set('rubro', params.rubro);
     if (params?.ciudad) qs.set('ciudad', normalizeSearchQuery(params.ciudad));
     if (params?.subrubro) qs.set('subrubro', normalizeSearchQuery(params.subrubro));

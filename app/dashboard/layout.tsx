@@ -49,12 +49,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     : "U";
 
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
-    <aside className={`bg-[#002060] flex flex-col h-full ${mobile ? "w-64" : collapsed ? "w-16" : "w-56"} ${mobile ? "" : "flex-shrink-0 transition-all duration-300"}`}>
+    <aside className={`bg-[#172a5c] flex flex-col h-full ${mobile ? "w-64" : collapsed ? "w-16" : "w-56"} ${mobile ? "" : "flex-shrink-0 transition-all duration-300"}`}>
       <div className="px-3 py-4 border-b border-blue-700 flex items-center justify-between min-h-[60px]">
         {(!collapsed || mobile) && (
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center flex-shrink-0 overflow-hidden">
-              <Image src="/logo-sistema-white.jpeg" alt="Logo" width={32} height={32} className="object-cover w-full h-full" />
+              <Image src="/logo-sistema-white.jfif" alt="Logo" width={32} height={32} className="object-cover w-full h-full" />
             </div>
             <span className="text-sm font-semibold text-white tracking-tight leading-tight whitespace-nowrap">
               Directorio<br />
@@ -64,7 +64,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )}
         {collapsed && !mobile && (
           <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center flex-shrink-0 overflow-hidden mx-auto">
-            <Image src="/logo-sistema-white.jpeg" alt="Logo" width={32} height={32} className="object-cover w-full h-full" />
+            <Image src="/logo-sistema-white.jfif" alt="Logo" width={32} height={32} className="object-cover w-full h-full" />
           </div>
         )}
         {!mobile && !collapsed && (
@@ -154,7 +154,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded bg-white flex items-center justify-center overflow-hidden">
-              <Image src="/logo-sistema-white.jpeg" alt="Logo" width={24} height={24} className="object-cover w-full h-full" />
+              <Image src="/logo-sistema-white.jfif" alt="Logo" width={24} height={24} className="object-cover w-full h-full" />
             </div>
             <span className="text-sm font-semibold text-white">Directorio</span>
           </div>
