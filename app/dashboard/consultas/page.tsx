@@ -56,6 +56,8 @@ export default function ConsultasPage() {
   const [pais, setPais] = useState<string>("");
   const [rubro, setRubro] = useState<string>("");
   const [rubros, setRubros] = useState<string[]>([]);
+  const [subrubro, setSubrubro] = useState<string>("");
+  const [subrubros, setSubrubros] = useState<string[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(true);
@@ -67,15 +69,16 @@ export default function ConsultasPage() {
 
   useEffect(() => {
     let mounted = true;
-    api
-      .getRubros()
-      .then((data) => {
+    Promise.all([api.getRubros(), api.getSubrubros()])
+      .then(([rubrosData, subrubrosData]) => {
         if (!mounted) return;
-        if (Array.isArray(data)) setRubros(data.filter((x) => typeof x === "string") as string[]);
+        if (Array.isArray(rubrosData)) setRubros(rubrosData.filter((x) => typeof x === "string") as string[]);
+        if (Array.isArray(subrubrosData)) setSubrubros(subrubrosData.filter((x) => typeof x === "string") as string[]);
       })
       .catch(() => {
         if (!mounted) return;
         setRubros([]);
+        setSubrubros([]);
       });
     return () => {
       mounted = false;
@@ -92,6 +95,7 @@ export default function ConsultasPage() {
           search: search.trim() || undefined,
           pais: pais || undefined,
           rubro: rubro || undefined,
+          subrubro: subrubro || undefined,
           limit: pageSize,
         }) as ConsultasPagedResponse;
 
@@ -114,7 +118,7 @@ export default function ConsultasPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [pais, rubro, search]);
+  }, [pais, rubro, search, subrubro]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -130,6 +134,7 @@ export default function ConsultasPage() {
             search: search.trim() || undefined,
             pais: pais || undefined,
             rubro: rubro || undefined,
+            subrubro: subrubro || undefined,
             cursor,
             limit: pageSize,
           }) as ConsultasPagedResponse;
@@ -148,7 +153,7 @@ export default function ConsultasPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [cursor, hasMore, loadingInitial, loadingMore, pais, rubro, search]);
+  }, [cursor, hasMore, loadingInitial, loadingMore, pais, rubro, search, subrubro]);
 
   const calcCalificacion = (proveedor: Proveedor) => {
     if (!proveedor.pedidos || proveedor.pedidos.length === 0) return 0;
@@ -214,6 +219,22 @@ export default function ConsultasPage() {
               {rubros.map((r) => (
                 <option key={r} value={r}>
                   {r}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="w-full sm:w-64">
+            <select
+              value={subrubro}
+              onChange={(e) => setSubrubro(e.target.value)}
+              aria-label="Filtrar por subrubro"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+            >
+              <option value="">Todos los subrubros</option>
+              {subrubros.map((s) => (
+                <option key={s} value={s}>
+                  {s}
                 </option>
               ))}
             </select>

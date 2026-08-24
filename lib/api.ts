@@ -250,6 +250,7 @@ export const api = {
     return request(`/proveedores/consultas-paged${qs.toString() ? `?${qs.toString()}` : ''}`);
   },
   getRubros: () => request('/proveedores/rubros'),
+  getSubrubros: () => request('/proveedores/subrubros'),
   getProveedor: (id: number) => request(`/proveedores/${id}`),
   createProveedor: (formData: FormData) => requestFormData('/proveedores', formData, 'POST'),
   updateProveedor: (id: number, formData: FormData) => requestFormData(`/proveedores/${id}`, formData, 'PATCH'),

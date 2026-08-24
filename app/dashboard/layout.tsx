@@ -54,7 +54,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {(!collapsed || mobile) && (
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center flex-shrink-0 overflow-hidden">
-              <Image src="/logo-sistema-white.jfif" alt="Logo" width={32} height={32} className="object-cover w-full h-full" />
+              <Image src="/logo-sistema-white.jfif" alt="Logo" width={32} height={32} className="object-contain w-full h-full" />
             </div>
             <span className="text-sm font-semibold text-white tracking-tight leading-tight whitespace-nowrap">
               Directorio<br />
